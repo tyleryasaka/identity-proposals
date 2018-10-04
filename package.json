@@ -1,0 +1,19 @@
+{
+  "name": "erc725-proposals",
+  "version": "1.0.0",
+  "description": "Example implementation of my proposed changes to ERC725/ERC735",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "author": "Tyler Yasaka",
+  "license": "MIT",
+  "dependencies": {
+    "openzeppelin-solidity": "^1.12.0",
+    "truffle": "^4.1.14",
+    "web3": "^1.0.0-beta.36"
+  }
+}
