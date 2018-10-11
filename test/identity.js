@@ -2,8 +2,11 @@ var Identity = artifacts.require('Identity')
 var Counter = artifacts.require('Counter')
 var IdentityManager = artifacts.require('IdentityManager')
 var IdentityRegistry = artifacts.require('IdentityRegistry')
+var ClaimRegistry = artifacts.require('ClaimRegistry')
 var Web3 = require('web3')
 
+const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
+const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const web3 = new Web3()
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -32,10 +35,6 @@ contract('Identity', function(accounts) {
     assert.equal(result.logs[0].args.to, counter.address)
     assert.equal(result.logs[0].args.value, 0)
     assert.equal(result.logs[0].args.data, encodedCall)
-
-    // Check that identity owns itself via ERC1056
-    const identityOwner = await identityRegistry.identityOwner(identity.address)
-    assert.equal(identityOwner, identity.address)
   })
 
   it('should be able to integrate with a key manager', async function() {
@@ -56,5 +55,30 @@ contract('Identity', function(accounts) {
 
     // Check that increment was called
     assert.equal((await counter.get()).toString(), '1')
+  })
+
+  it('should own itself via ERC1056', async function() {
+    // Deploy contracts
+    const identity = await Identity.new()
+    const identityRegistry = await IdentityRegistry.new()
+
+    // Check that identity owns itself via ERC1056
+    const identityOwner = await identityRegistry.identityOwner(identity.address)
+    assert.equal(identityOwner, identity.address)
+  })
+
+  it('should be able to make a claim via ERC780', async function() {
+    // Deploy contracts
+    const identity = await Identity.new()
+    const claimRegistry = await ClaimRegistry.new()
+
+    // Call setClaim using identity
+    const subject = accounts[1]
+    const encodedCall = getEncodedCall(web3, claimRegistry, 'setClaim', [subject, claimKey, claimValue])
+    const result = await identity.execute(claimRegistry.address, 0, encodedCall)
+
+    // Check that claim was recorded
+    const claim = await claimRegistry.getClaim(identity.address, subject, claimKey)
+    assert.equal(claim, claimValue)
   })
 })
