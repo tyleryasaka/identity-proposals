@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 /* This is intended to represent a future ERC to standardize key management */
 
-contract ERCXXXX {
+contract ERCXXXX_KeyManager {
     uint256 constant MANAGEMENT_KEY = 1;
     uint256 constant ACTION_KEY = 2;
     uint256 constant CLAIM_SIGNER_KEY = 3;
