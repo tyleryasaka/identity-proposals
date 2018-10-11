@@ -6,19 +6,6 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract ClaimManager is ERCXXXX_ClaimManager, Ownable {
     mapping(address => mapping(bytes32 => bytes32)) public claims;
-
-    event ClaimSet(
-        address indexed subject,
-        bytes32 indexed key,
-        bytes32 value,
-        uint updatedAt
-    );
-
-    event ClaimRemoved(
-        address indexed subject,
-        bytes32 indexed key,
-        uint removedAt
-    );
     ERCXXXX_ClaimVerifier _verifier;
 
     // create or update clams
