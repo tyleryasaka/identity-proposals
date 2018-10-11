@@ -1,6 +1,7 @@
 var Identity = artifacts.require('Identity')
 var Counter = artifacts.require('Counter')
 var IdentityManager = artifacts.require('IdentityManager')
+var IdentityRegistry = artifacts.require('IdentityRegistry')
 var Web3 = require('web3')
 
 const web3 = new Web3()
@@ -15,6 +16,7 @@ contract('Identity', function(accounts) {
     // Deploy contracts
     const identity = await Identity.new()
     const counter = await Counter.new()
+    const identityRegistry = await IdentityRegistry.new()
 
     // Counter should be 0 initially
     assert.equal((await counter.get()).toString(), '0')
@@ -30,6 +32,10 @@ contract('Identity', function(accounts) {
     assert.equal(result.logs[0].args.to, counter.address)
     assert.equal(result.logs[0].args.value, 0)
     assert.equal(result.logs[0].args.data, encodedCall)
+
+    // Check that identity owns itself via ERC1056
+    const identityOwner = await identityRegistry.identityOwner(identity.address)
+    assert.equal(identityOwner, identity.address)
   })
 
   it('should be able to integrate with a key manager', async function() {
