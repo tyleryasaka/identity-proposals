@@ -81,4 +81,17 @@ contract('Identity', function(accounts) {
     const claim = await claimRegistry.getClaim(identity.address, subject, claimKey)
     assert.equal(claim, claimValue)
   })
+
+  it('should be able to set and get pointers', async function() {
+    // Deploy contracts
+    const identity = await Identity.new()
+    const counter = await Counter.new()
+
+    // Call setPointer
+    await identity.setPointer(0, counter.address)
+
+    // Call getPointer
+    const pointer = await identity.getPointer(0)
+    assert.equal(pointer, counter.address)
+  })
 })
