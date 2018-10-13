@@ -9,21 +9,5 @@ pragma solidity ^0.4.24;
 */
 
 contract ERCXXXX_ClaimManager {
-    event ClaimSet(
-        address indexed subject,
-        bytes32 indexed key,
-        bytes32 value,
-        uint updatedAt
-    );
-
-    event ClaimRemoved(
-        address indexed subject,
-        bytes32 indexed key,
-        uint removedAt
-    );
-
-    function setClaim(address subject, bytes32 key, bytes32 value) public;
-    function setSelfClaim(bytes32 key, bytes32 value) public;
     function getClaim(address subject, bytes32 key) public constant returns(bytes32);
-    function removeClaim(address subject, bytes32 key) public;
 }
