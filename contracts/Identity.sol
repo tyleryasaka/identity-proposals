@@ -3,6 +3,8 @@ pragma solidity ^0.4.24;
 import "./erc725.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
+/* TODO: implement ERC165 */
+
 contract Identity is ERC725, Ownable {
     mapping(uint256 => address) ambassadors;
 
