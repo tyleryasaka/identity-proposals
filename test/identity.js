@@ -94,4 +94,34 @@ contract('Identity', function(accounts) {
     const pointer = await identity.getAmbassador(0)
     assert.equal(pointer, counter.address)
   })
+
+  describe('gas cost comparison', async function() {
+    let identity, identityWithManager, counter, identityManager
+
+    beforeEach(async function() {
+      identity = await Identity.new()
+      identityWithManager = await Identity.new()
+      counter = await Counter.new()
+      identityManager = await IdentityManager.new(identityWithManager.address, { from: accounts[1] })
+      await identityWithManager.transferOwnership(identityManager.address)
+    })
+
+    it('without manager', async function() {
+      // Call counter.increment from identity
+      const encodedCall = getEncodedCall(web3, counter, 'increment')
+      await identity.execute(counter.address, 0, encodedCall)
+
+      // Check that increment was called
+      assert.equal((await counter.get()).toString(), '1')
+    })
+
+    it('with manager', async function() {
+      // Call counter.increment from identity, through identity manager
+      const encodedCall = getEncodedCall(web3, counter, 'increment')
+      await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+
+      // Check that increment was called
+      assert.equal((await counter.get()).toString(), '1')
+    })
+  })
 })
