@@ -87,10 +87,10 @@ contract('Identity', function(accounts) {
     const identity = await Identity.new()
     const counter = await Counter.new()
 
-    // Call setPointer
+    // Call setAmbassador
     await identity.setAmbassador(0, counter.address)
 
-    // Call getPointer
+    // Call getAmbassador
     const pointer = await identity.getAmbassador(0)
     assert.equal(pointer, counter.address)
   })
