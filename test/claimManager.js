@@ -1,12 +1,14 @@
 var ClaimManager = artifacts.require('ClaimManager')
 var ClaimManager780 = artifacts.require('ClaimManager780')
 var ClaimRegistry = artifacts.require('ClaimRegistry')
+var ClaimLibrary = artifacts.require('ClaimLibrary')
 var Identity = artifacts.require('Identity')
 var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const emptyClaim = '0x0000000000000000000000000000000000000000000000000000000000000000'
+const claimManagerAmbassadorKey = 123
 const web3 = new Web3()
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -46,6 +48,23 @@ contract('ClaimManager', function(accounts) {
 
     // Call getClaim
     const claim = await claimManager.getClaim(accounts[1], claimKey)
+    assert.equal(claim, claimValue)
+  })
+
+  it('should work with ERC725', async function() {
+    // Deploy contracts
+    const identity = await Identity.new()
+    const claimManager = await ClaimManager.new()
+    const claimLibrary = await ClaimLibrary.new()
+
+    // Call setClaim
+    await claimManager.setClaim(accounts[1], claimKey, claimValue)
+
+    // Set claimManager as ambassador
+    await identity.setAmbassador(claimManagerAmbassadorKey, claimManager.address)
+
+    // Call getClaim
+    const claim = await claimLibrary.getClaim(identity.address, accounts[1], claimKey)
     assert.equal(claim, claimValue)
   })
 })
