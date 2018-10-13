@@ -4,7 +4,7 @@ import "./erc725.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract Identity is ERC725, Ownable {
-    mapping(uint256 => address) pointers;
+    mapping(uint256 => address) ambassadors;
 
     function execute(address _to, uint256 _value, bytes _data) public onlyOwner returns (bool _success) {
         _success = _to.call(_data, _value);
@@ -15,12 +15,12 @@ contract Identity is ERC725, Ownable {
         }
     }
 
-    function setPointer(uint256 key, address value) public {
-        pointers[key] = value;
-        emit PointerSet(key, value);
+    function setAmbassador(uint256 key, address value) public {
+        ambassadors[key] = value;
+        emit AmbassadorSet(key, value);
     }
 
-    function getPointer(uint256 key) public view returns (address value) {
-        return pointers[key];
+    function getAmbassador(uint256 key) public view returns (address value) {
+        return ambassadors[key];
     }
 }
