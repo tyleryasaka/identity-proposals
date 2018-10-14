@@ -8,6 +8,6 @@ pragma solidity ^0.4.24;
     rather than a central registry.
 */
 
-contract ERCXXXX_ClaimManager {
+contract ERCXXXX_ClaimIssuer {
     function getClaim(address subject, bytes32 key) public constant returns(bytes32);
 }

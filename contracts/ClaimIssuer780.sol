@@ -1,15 +1,15 @@
 pragma solidity ^0.4.24;
 
-import "./ERCXXXX_ClaimManager.sol";
+import "./ERCXXXX_ClaimIssuer.sol";
 import "./ERCXXXX_Identity.sol";
 import "./ERC780.sol";
 
 /*
     This is an example implementation of how claim management can be done in a
-    way that is compliant with both ERCXXXX_ClaimManager and ERC780.
+    way that is compliant with both ERCXXXX_ClaimIssuer and ERC780.
 */
 
-contract ClaimManager780 is ERCXXXX_ClaimManager {
+contract ClaimIssuer780 is ERCXXXX_ClaimIssuer {
     ERC780 registry;
     ERCXXXX_Identity identity;
 
