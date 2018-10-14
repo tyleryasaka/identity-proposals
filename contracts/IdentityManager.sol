@@ -1,16 +1,16 @@
 pragma solidity ^0.4.24;
 
-import "./ERC725.sol";
+import "./ERCXXXX_Identity.sol";
 import "./ERCXXXX_KeyManager.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /* This is a *very* poorly implemented key management contract. It is for demonstration purposes only. */
 
 contract IdentityManager is ERCXXXX_KeyManager, Ownable {
-    ERC725 identity;
+    ERCXXXX_Identity identity;
 
     constructor (address _identity) public {
-        identity = ERC725(_identity);
+        identity = ERCXXXX_Identity(_identity);
     }
 
     function getKey(bytes32 _key) public view returns(uint256[] purposes, uint256 keyType, bytes32 key) {}

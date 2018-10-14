@@ -1,11 +1,11 @@
 pragma solidity ^0.4.24;
 
-import "./erc725.sol";
+import "./ERCXXXX_Identity.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /* TODO: implement ERC165 */
 
-contract Identity is ERC725 {
+contract Identity is ERCXXXX_Identity {
     event DelegateSet(bytes32 indexed delegateType, address indexed delegate);
 
     address private _owner;

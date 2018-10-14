@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./ERCXXXX_ClaimManager.sol";
-import "./ERC725.sol";
+import "./ERCXXXX_Identity.sol";
 import "./ERC780.sol";
 
 /*
@@ -11,11 +11,11 @@ import "./ERC780.sol";
 
 contract ClaimManager780 is ERCXXXX_ClaimManager {
     ERC780 registry;
-    ERC725 identity;
+    ERCXXXX_Identity identity;
 
     constructor(address _registry, address _identity) public {
         registry = ERC780(_registry);
-        identity = ERC725(_identity);
+        identity = ERCXXXX_Identity(_identity);
     }
 
     function getClaim(address subject, bytes32 key) public view returns(bytes32) {

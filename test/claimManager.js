@@ -51,7 +51,7 @@ contract('ClaimManager', function(accounts) {
     assert.equal(claim, claimValue)
   })
 
-  it('should work with ERC725', async function() {
+  it('should work with ERCXXXX_Identity', async function() {
     // Deploy contracts
     const identity = await Identity.new()
     const claimManager = await ClaimManager.new()
