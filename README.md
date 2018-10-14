@@ -10,7 +10,7 @@ When designing these standards, I think it is important to be crystal clear rega
 
 ### 1. Universal Login
 
-Here I want to fill an important gap that I think exists in the Ethereum ecosystem. For all intents and purposes, wallets are essentially acting as users' identities on the blockchain. This forbids any sort of wise identity management solution. Such a solution would allow keys to be rotated over time, and would allow for a hierarchy of keys for management. A master key might grant your full control of your identity, but would be something that you would want to keep somewhere safe (i.e. not on your phone). However, you could have a lower level key that you carry on your phone. If you lose your phone and think the private key could be compromised, no problem. You can simply use your master key to remove that key. Bottom line: we want to decouple the wallet from the identity.
+Here I want to fill an important gap that I think exists in the Ethereum ecosystem. For all intents and purposes, wallets are essentially acting as users' identities on the blockchain. This forbids any sort of wise identity management solution. Such a solution would allow keys to be rotated over time, and would allow for a hierarchy of keys for management. A master key might grant you full control of your identity, but would be something that you would want to keep somewhere safe (i.e. not on your phone). However, you could have a lower level key that you carry on your phone. If you lose your phone and think the private key could be compromised, no problem. You can simply use your master key to remove that key. Bottom line: we want to decouple the wallet from the identity.
 
 This is related to [meta transactions](https://medium.com/@austin_48503/ethereum-meta-transactions-90ccf0859e84).
 
@@ -22,7 +22,7 @@ Picture this: a user is browing a Dapp on Chrome with Metamask. They do somethin
 
 A claim is simply a statement made by one identity (the issuer) about another (the subject). There are a lot of use cases for claims. For example, a government entity might issue a claim saying that someone has a valid driver's license. Another use case could be notarization. Someone could digitally sign a statement saying that they witnessed a certain event.
 
-Picture this: my local city government has issued a claim saying that I am eligible to purchase alcohol. I go to a restaurant for dinner and order wine. The restaurant has an app that can quickly check that I have a valid government-issued claim stating that I am allowed to make the purchase. Then I go to the bar afterwards. I decide to get beer this time. Because there is a standard place to look for the "allowed to purchase alcohol" claim, the bar can use its own app to look this up.
+Picture this: my local government has issued a claim saying that I am eligible to purchase alcohol. I go to a restaurant for dinner and order wine. The restaurant has an app that can quickly check that I have a valid government-issued claim stating that I am allowed to make the purchase. Then I go to the bar afterwards. I decide to get beer this time. Because there is a standard place to look for the "allowed to purchase alcohol" claim, the bar can use its own app to look this up.
 
 This may or not be a realistic real-world scenario in the near future, but regardless it should not be difficult to see the value in having standardized claims lookup.
 
@@ -36,13 +36,13 @@ The *registry method* defines a contract to act as a central repository of all a
 
 The *delegate method* instead allows each agent (i.e. each identity) to deploy its own context-specific *delegate contract* to represent it in that context. So for block-paper-scissors, I might deploy a contract and declare it to be my delegate for that game. I would record all of my plays in that contract. For claims, I might declare a claims contract and declare it to be my delegate for claims.
 
-Generalizing a bit, I would call the registry method a *centralized architecture*. And I would call the delegate method *decentralized architecture*. Benefits of centralized architecture are simplicity and efficiency, and providing a central index for all activity in the given context. A benefit of decentralized architecture is flexibility and lack of a central point of failure. I think there are some scenarios in which centralized architectures make sense, and others in which decentralized architectures make sense.
+Generalizing a bit, I would call the registry method a *centralized architecture*. And I would call the delegate method a *decentralized architecture*. Benefits of centralized architecture are simplicity and efficiency, and providing a central index for all activity in a given context. Benefits of decentralized architecture are flexibility and lack of a central point of failure. I think there are some scenarios in which centralized architectures make sense, and others in which decentralized architectures make sense.
 
 I think in the world of identity and claims, decentralized architecture should at least be an option. Applications should be able to determine on a case-by-case basis what architecture they wish to use. I think for claims at the very least, a decentralized architecture makes sense. Thus I think that **a good identity standard will be compatible with both centralized and decentralized architectures**.
 
 ## Existing Standards
 
-The existing standards around identity and claims are as follows:
+The existing standards around identity and claims (that I am aware of and find relevant) are as follows:
 - [ERC725](https://github.com/ethereum/EIPs/issues/725)
 - [ERC735](https://github.com/ethereum/EIPs/issues/735)
 - [ERC780](https://github.com/ethereum/EIPs/issues/780)
