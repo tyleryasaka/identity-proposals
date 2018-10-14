@@ -6,8 +6,6 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /* TODO: implement ERC165 */
 
 contract Identity is ERCXXXX_Identity {
-    event DelegateSet(bytes32 indexed delegateType, address indexed delegate);
-
     address private _owner;
     mapping(bytes32 => address) delegates;
 
