@@ -8,7 +8,7 @@ var Web3 = require('web3')
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const emptyClaim = '0x0000000000000000000000000000000000000000000000000000000000000000'
-const claimManagerAmbassadorKey = 123
+const claimManagerDelegateKey = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const web3 = new Web3()
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -60,8 +60,8 @@ contract('ClaimManager', function(accounts) {
     // Call setClaim
     await claimManager.setClaim(accounts[1], claimKey, claimValue)
 
-    // Set claimManager as ambassador
-    await identity.setAmbassador(claimManagerAmbassadorKey, claimManager.address)
+    // Set claimManager as delegate
+    await identity.setDelegate(claimManagerDelegateKey, claimManager.address)
 
     // Call getClaim
     const claim = await claimLibrary.getClaim(identity.address, accounts[1], claimKey)

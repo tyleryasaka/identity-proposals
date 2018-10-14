@@ -6,8 +6,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /* TODO: implement ERC165 */
 
 contract Identity is ERC725 {
+    event DelegateSet(bytes32 indexed delegateType, address indexed delegate);
+
     address private _owner;
-    mapping(uint256 => address) ambassadors;
+    mapping(bytes32 => address) delegates;
 
     constructor() public {
       _owner = msg.sender;
@@ -32,12 +34,12 @@ contract Identity is ERC725 {
         }
     }
 
-    function setAmbassador(uint256 key, address value) public {
-        ambassadors[key] = value;
-        emit AmbassadorSet(key, value);
+    function setDelegate(bytes32 delegateType, address delegate) public {
+        delegates[delegateType] = delegate;
+        emit DelegateSet(delegateType, delegate);
     }
 
-    function getAmbassador(uint256 key) public view returns (address value) {
-        return ambassadors[key];
+    function getDelegate(bytes32 delegateType) public view returns (address delegate) {
+        return delegates[delegateType];
     }
 }

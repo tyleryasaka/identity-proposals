@@ -7,6 +7,7 @@ var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
+const delegateType = '0x0000000000000000000000000000000000000000000000000000000000000abc'
 const web3 = new Web3()
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -82,16 +83,16 @@ contract('Identity', function(accounts) {
     assert.equal(claim, claimValue)
   })
 
-  it('should be able to set and get ambassadors', async function() {
+  it('should be able to set and get delegates', async function() {
     // Deploy contracts
     const identity = await Identity.new()
     const counter = await Counter.new()
 
-    // Call setAmbassador
-    await identity.setAmbassador(0, counter.address)
+    // Call setDelegate
+    await identity.setDelegate(delegateType, counter.address)
 
-    // Call getAmbassador
-    const pointer = await identity.getAmbassador(0)
+    // Call getDelegate
+    const pointer = await identity.getDelegate(delegateType)
     assert.equal(pointer, counter.address)
   })
 
