@@ -58,13 +58,11 @@ Claims are attached to subject rather than issuer. Again, see [my Medium post](h
 
 ### ERC780 Concerns
 
- Relies on universal registry contract. I find this problematic because:
+ Relies on universal registry contract. I think this will work for some use cases, but I think it has some limitations:
 
- (1) It is a single point of failure. This is probably the smallest concern, as it is a small contract and easy to audit. Still, unless we can mathematically prove that this contract will work as expected now, and in all future versions of solidity (which I doubt is provable), this is a risk.
+ (1) It's inflexible. It relies on a registry that is deployed once and cannot be upgraded. Not only can it not be upgraded, but it cannot be customized for special use cases.
 
- (2) This standard is inflexible. It relies on a registry that is deployed once and cannot be upgraded. Not only can it not be upgraded, but it cannot be customized for special use cases.
-
- (3) It lacks support for *computable claims*. I have talked to multiple people that have expressed a desire to be able to define their own logic for claim validity. For example, I might wish to say that a "registration claim" that I have issued is valid only when a `isRegistrationOpen` flag is set to `true`. It is true that perhaps computable claims can be conceptualized as permissions rather than claims - such that the logic is implemented at a level above the claims - nonetheless, I think it is better to be unopinionated here and allow people to use computable claims if they wish.
+ (2) It lacks support for *computable claims*. I have talked to multiple people that have expressed a desire to be able to define their own logic for claim validity. For example, I might wish to say that a "registration claim" that I have issued is valid only when a `isRegistrationOpen` flag is set to `true`. It is true that perhaps computable claims can be conceptualized as permissions rather than claims - such that the logic is implemented at a level above the claims - nonetheless, I think it is better to be unopinionated here and allow people to use computable claims if they wish.
 
 ### ERC1056 Concerns
 
@@ -96,6 +94,10 @@ contract ERCXXXX_Identity {
 This is heavily inspired by ERC725, but it has some major modifications. It strips out all of the key management functions, and adds `setDelegate` and `getDelegate`. A `delegate` is represented by an address and is referenced by a `delegateType`. There is one `delegate` per identity per `delegateType`.
 
 The purpose of a delegate is to represent the identity in a specific context, in the spirit of the decentralized architecture I defined above. For example, a delegate for claims would be a contract that holds all claims issued by the associated identity. The `delegateType` can be used to specify the context.
+
+Delegates can be thought of as a way to extend the functionality of the identity contract. The contract can't be changed or upgraded, but delegates can. The delegates allow the identity contract to essentially gain new abilities over time as needed.
+
+Would love feedback on the delegate idea - does it make sense or would it be better to leave it out?
 
 ### ERCXXXX_ClaimIssuer
 
