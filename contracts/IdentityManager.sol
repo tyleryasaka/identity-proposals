@@ -15,12 +15,12 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     ERCXXXX_Identity private _identity;
 
     modifier onlyManagement() {
-      require(_hasRole(msg.sender, MANAGEMENT_ROLE));
+      require(_hasRole(msg.sender, MANAGEMENT_ROLE), "Must have manager role");
       _;
     }
 
     modifier onlyAction() {
-      require(_hasRole(msg.sender, ACTION_ROLE));
+      require(_hasRole(msg.sender, ACTION_ROLE), "Must have action role");
       _;
     }
 
@@ -54,8 +54,10 @@ contract IdentityManager is ERCXXXX_IdentityManager {
 
     function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external {
         bytes32 signatureData = keccak256(abi.encodePacked(address(this), to, value, executionData, nonce));
-        address signer = ecrecover(signatureData, v, r, s);
-        require(_hasRole(signer, ACTION_ROLE));
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedData = keccak256(prefix, signatureData);
+        address recovered = ecrecover(prefixedData, v, r, s);
+        require(_hasRole(recovered, ACTION_ROLE), "Must have manager role");
         nonce++;
         _identity.execute(to, value, executionData);
         emit Executed(to, value, executionData);
