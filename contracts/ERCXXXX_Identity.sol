@@ -6,5 +6,5 @@ interface ERCXXXX_Identity {
 
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
-    function execute(address _to, uint256 _value, bytes _data) external returns (bool _success);
+    function execute(address to, uint256 value, bytes data) external returns (bool);
 }
