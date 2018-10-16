@@ -1,8 +1,6 @@
 var ClaimIssuer = artifacts.require('ClaimIssuer')
-var ClaimIssuer780 = artifacts.require('ClaimIssuer780')
-var ClaimRegistry = artifacts.require('ClaimRegistry')
-var ClaimLibrary = artifacts.require('ClaimLibrary')
-var Identity = artifacts.require('Identity')
+var ClaimIssuerRegistry = artifacts.require('ClaimIssuerRegistry')
+var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
 var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -35,36 +33,36 @@ contract('ClaimIssuer', function(accounts) {
     const removedClaim = await claimIssuer.getClaim(accounts[1], claimKey)
     assert.equal(removedClaim, emptyClaim)
   })
+})
 
-  it('should be able to serve as a proxy for ERC780', async function() {
+contract('ClaimIssuerRegistry', function(accounts) {
+  it('should integrate with ClaimIssuer', async function() {
     // Deploy contracts
-    const identity = await Identity.new()
-    const claimRegistry = await ClaimRegistry.new()
-    const claimIssuer = await ClaimIssuer780.new(claimRegistry.address, identity.address)
-
-    // Call setClaim
-    const encodedCall = getEncodedCall(web3, claimRegistry, 'setClaim', [accounts[1], claimKey, claimValue])
-    await identity.execute(claimRegistry.address, 0, encodedCall)
-
-    // Call getClaim
-    const claim = await claimIssuer.getClaim(accounts[1], claimKey)
-    assert.equal(claim, claimValue)
-  })
-
-  it('should work with ERCXXXX_Identity', async function() {
-    // Deploy contracts
-    const identity = await Identity.new()
+    const claimRegistry780 = ClaimRegistry780.new()
+    const claimIssuerRegistry = await ClaimIssuerRegistry.new(claimRegistry780.address)
     const claimIssuer = await ClaimIssuer.new()
-    const claimLibrary = await ClaimLibrary.new()
+
+    // Call setIssuer
+    await claimIssuerRegistry.setIssuer(claimIssuer.address)
 
     // Call setClaim
     await claimIssuer.setClaim(accounts[1], claimKey, claimValue)
 
-    // Set claimIssuer as delegate
-    await identity.setDelegate(claimIssuerDelegateKey, claimIssuer.address)
+    // Call getClaim
+    const claim = await claimIssuerRegistry.getClaim(accounts[0], accounts[1], claimKey)
+    assert.equal(claim, claimValue)
+  })
+
+  it('should be backwards compatible with ERC780', async function() {
+    // Deploy contracts
+    const claimRegistry780 = await ClaimRegistry780.new()
+    const claimIssuerRegistry = await ClaimIssuerRegistry.new(claimRegistry780.address)
+
+    // Call setClaim
+    await claimRegistry780.setClaim(accounts[1], claimKey, claimValue)
 
     // Call getClaim
-    const claim = await claimLibrary.getClaim(identity.address, accounts[1], claimKey)
+    const claim = await claimIssuerRegistry.getClaim(accounts[0], accounts[1], claimKey)
     assert.equal(claim, claimValue)
   })
 })

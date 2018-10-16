@@ -7,7 +7,7 @@ import "./ERC780.sol";
     https://github.com/uport-project/ethr-did-registry/blob/develop/contracts/EthereumDIDRegistry.sol
 */
 
-contract ClaimRegistry is ERC780 {
+contract ClaimRegistry780 is ERC780 {
 
     mapping(address => mapping(address => mapping(bytes32 => bytes32))) public registry;
 

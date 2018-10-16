@@ -2,7 +2,7 @@ var Identity = artifacts.require('Identity')
 var Counter = artifacts.require('Counter')
 var IdentityManager = artifacts.require('IdentityManager')
 var IdentityRegistry = artifacts.require('IdentityRegistry')
-var ClaimRegistry = artifacts.require('ClaimRegistry')
+var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
 var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -71,15 +71,15 @@ contract('Identity', function(accounts) {
   it('should be able to make a claim via ERC780', async function() {
     // Deploy contracts
     const identity = await Identity.new()
-    const claimRegistry = await ClaimRegistry.new()
+    const claimRegistry780 = await ClaimRegistry780.new()
 
     // Call setClaim using identity
     const subject = accounts[1]
-    const encodedCall = getEncodedCall(web3, claimRegistry, 'setClaim', [subject, claimKey, claimValue])
-    const result = await identity.execute(claimRegistry.address, 0, encodedCall)
+    const encodedCall = getEncodedCall(web3, claimRegistry780, 'setClaim', [subject, claimKey, claimValue])
+    const result = await identity.execute(claimRegistry780.address, 0, encodedCall)
 
     // Check that claim was recorded
-    const claim = await claimRegistry.getClaim(identity.address, subject, claimKey)
+    const claim = await claimRegistry780.getClaim(identity.address, subject, claimKey)
     assert.equal(claim, claimValue)
   })
 

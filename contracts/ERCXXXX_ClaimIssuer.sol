@@ -5,7 +5,7 @@ pragma solidity ^0.4.24;
     The interface is intended to match that of ERC780 as closely as possible,
     so that the two standards are interoperable. The difference with this
     standard is that claims are stored on a contract controlled by the issuer,
-    rather than a central registry.
+    rather than a global registry.
 */
 
 contract ERCXXXX_ClaimIssuer {
