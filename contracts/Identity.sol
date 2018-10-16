@@ -26,12 +26,8 @@ contract Identity is ERCXXXX_Identity {
         _owner = newOwner;
     }
 
-    function execute(address to, uint256 value, bytes data) external onlyOwner returns (bool success) {
-        success = to.call(data, value);
-        if (success) {
-            emit Executed(to, value, data);
-        } else {
-            emit ExecutionFailed(to, value, data);
-        }
+    function execute(address to, uint256 value, bytes data) external onlyOwner {
+        to.call(data, value);
+        emit Executed(to, value, data);
     }
 }
