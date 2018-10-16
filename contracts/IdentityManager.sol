@@ -24,9 +24,9 @@ contract IdentityManager is ERCXXXX_IdentityManager {
       _;
     }
 
-    constructor (address identity) public {
+    constructor (address identity, address manager) public {
         _identity = ERCXXXX_Identity(identity);
-        _roles[msg.sender] = MANAGEMENT_ROLE;
+        _roles[manager] = MANAGEMENT_ROLE;
     }
 
     function hasRole(address actor, uint256 level) external view returns(bool) {

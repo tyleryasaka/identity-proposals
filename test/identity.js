@@ -53,7 +53,7 @@ contract('Identity', function(accounts) {
     assert.equal((await counter.get()).toString(), '0')
 
     // Transfer identity ownership to the key manager
-    const identityManager = await IdentityManager.new(identity.address, { from: accounts[1] })
+    const identityManager = await IdentityManager.new(identity.address, accounts[1], { from: accounts[1] })
     await identity.transferOwnership(identityManager.address)
 
     // Call counter.increment from identity, through identity manager
@@ -96,7 +96,7 @@ contract('Identity', function(accounts) {
       identity = await Identity.new(accounts[0])
       identityWithManager = await Identity.new(accounts[0])
       counter = await Counter.new()
-      identityManager = await IdentityManager.new(identityWithManager.address, { from: accounts[1] })
+      identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
       await identityWithManager.transferOwnership(identityManager.address)
     })
 
@@ -131,7 +131,7 @@ contract('Identity', function(accounts) {
 contract('IdentityManager', function(accounts) {
   it('should be able to add and remove roles', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address)
+    const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const actionRole = 2
     const emptyRole = 0
 
@@ -152,7 +152,7 @@ contract('IdentityManager', function(accounts) {
 
   it('should allow execution for action roles', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address)
+    const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionRole = 2
     await identity.transferOwnership(identityManager.address)
