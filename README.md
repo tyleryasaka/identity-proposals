@@ -26,20 +26,6 @@ Picture this: my local government has issued a claim saying that I am eligible t
 
 This may or not be a realistic real-world scenario in the near future, but regardless it should not be difficult to see the value in having standardized claims lookup.
 
-### 3. Decentralized Architecture
-
-While exploring identity solutions, I had an epiphany. I realized that there are certain systems that are *interactive* in nature. By interactive, I mean that they involve relations between decision-making agents. Example of these types of systems are games, economies... and yes, claims-based systems.
-
-I also have conceptualized two different approaches for modeling interactive systems on Ethereum. I call them the registry method and the delegate method.
-
-The *registry method* defines a contract to act as a central repository of all activity in a given context. So in the context of claims, this registry is a claims registry (such as [ERC780](https://github.com/ethereum/EIPs/issues/780)). In the context of a game of [block-paper-scissors](https://github.com/monospaced-out/block-paper-scissors), this might be a [contract that stores all moves in the game](https://github.com/monospaced-out/block-paper-scissors/blob/master/contracts/BlockPaperScissors.sol).
-
-The *delegate method* instead allows each agent (i.e. each identity) to deploy its own context-specific *delegate contract* to represent it in that context. So for block-paper-scissors, I might deploy a contract and declare it to be my delegate for that game. I would record all of my plays in that contract. For claims, I might declare a claims contract and declare it to be my delegate for claims.
-
-Generalizing a bit, I would call the registry method a *centralized architecture*. And I would call the delegate method a *decentralized architecture*. Benefits of centralized architecture are simplicity and efficiency, and providing a central index for all activity in a given context. Benefits of decentralized architecture are flexibility and lack of a central point of failure. I think there are some scenarios in which centralized architectures make sense, and others in which decentralized architectures make sense.
-
-I think in the world of identity and claims, decentralized architecture should at least be an option. Applications should be able to determine on a case-by-case basis what architecture they wish to use. I think for claims at the very least, a decentralized architecture makes sense. Thus I think that **a good identity standard will be compatible with both centralized and decentralized architectures**.
-
 ## Existing Standards
 
 The existing standards around identity and claims (that I am aware of and find relevant) are as follows:
@@ -70,10 +56,6 @@ I actually like ERC1056. However, it does not address universal login. (It does 
 
 ## Proposed Standards
 
-Standardizing is hard; we have to think about what things should be standardized, and what things should be left to implementation. We also have to think about the purpose of standardization. Do we want various user-facing clients to have a common contract interface? Or do we want to provide a consistent contract-to-contract interface? If something is standardized, there should be a clear use case that it intends to solve.
-
-With that in mind, it may turn out that some of my ideas in here should just be implementation suggestions rather than standards.
-
 ### ERCXXXX_KeyManager
 
 This is for now a placeholder, until I have had time to think through this further. That said, an easy starting place would be to use the key management functions of ERC725, as I suggested in my [Medium post](https://medium.com/@tyleryasaka/erc725-proposed-changes-ea2dc221136e). The value I can see in standardizing this is around UI. Might add value in allowing multiple clients to help a user manage an identity.
@@ -86,18 +68,10 @@ contract ERCXXXX_Identity {
     event ExecutionFailed(address indexed to, uint256 indexed value, bytes data);
 
     function execute(address _to, uint256 _value, bytes _data) public returns (bool _success);
-    function setDelegate(bytes32 delegateType, address delegate) public;
-    function getDelegate(bytes32 delegateType) public view returns (address delegate);
 }
 ```
 
-This is heavily inspired by ERC725, but it has some major modifications. It strips out all of the key management functions, and adds `setDelegate` and `getDelegate`. A `delegate` is represented by an address and is referenced by a `delegateType`. There is one `delegate` per identity per `delegateType`.
-
-The purpose of a delegate is to represent the identity in a specific context, in the spirit of the decentralized architecture I defined above. For example, a delegate for claims would be a contract that holds all claims issued by the associated identity. The `delegateType` can be used to specify the context.
-
-Delegates can be thought of as a way to extend the functionality of the identity contract. The contract can't be changed or upgraded, but delegates can. The delegates allow the identity contract to essentially gain new abilities over time as needed.
-
-Would love feedback on the delegate idea - does it make sense or would it be better to leave it out?
+This is heavily inspired by ERC725, but it strips out all of the key management functions.
 
 ### ERCXXXX_ClaimIssuer
 
@@ -105,12 +79,21 @@ Would love feedback on the delegate idea - does it make sense or would it be bet
 contract ERCXXXX_ClaimIssuer {
     function getClaim(address subject, bytes32 key) public constant returns(bytes32);
 }
+
+contract ERCXXXX_ClaimIssuerRegistry {
+    function setClaimIssuer(address claimIssuer) public;
+    function getClaim(address issuer, address subject, bytes32 key) public constant returns(bytes32);
+}
 ```
 
-The claim manager standard should be implemented by the delegate contract for claims for an identity. So if I want to issue claims, I would first deploy an implementation of `ERCXXXX_ClaimIssuer`. Then I would call `setDelegate` on my identity, passing in the address of my `ERCXXXX_ClaimIssuer` contract as the delegate address. (The `delegateType` should be coordinated and perhaps even standardized to some degree; I would propose `0x0000000000000000000000000000000000000000000000000000000000000000` as the delegateType for issued claims.)
+This is inspired by ERC780, but it allows the issuer to implement the `getClaim` method however they like (it just needs to conform to the interface). *It is fully backwards compatible with ERC780.*
+
+There is a global `ClaimIssuerRegistry` contract, which simply allows a `ClaimIssuer` contract to be associated with an issuer address. This allows the issuer to implement their own custom issuing contract, which is flexible and allows computable claims to be implemented.
+
+The `getClaim` method on the `ClaimIssuerRegistry` contract **must** be implemented as follows: if the given `issuer` does not have an associated `ClaimIssuer` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimIssuer` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
 
 ## This Codebase
 
-There are a lot of contracts here. Some of them are definitions/implementations of existing standards; others are implementations of the standards I have defined here. I also added a library that for now just has a convenience method for looking up a claim issued using `ERCXXXX_Identity` and `ERCXXXX_ClaimIssuer`. Note that this method has the *exact* same parameters and return value as ERC780's `getClaim` method. I did my best to keep these standards as interoperable as possible.
+There are a lot of contracts here. Some of them are definitions/implementations of existing standards; others are implementations of the standards I have defined here.
 
 The tests demonstrate usage of these standards. They can be run with `npm test` (after you have done an `npm install`).
