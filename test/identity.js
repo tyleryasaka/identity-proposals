@@ -3,6 +3,7 @@ var Counter = artifacts.require('Counter')
 var IdentityManager = artifacts.require('IdentityManager')
 var IdentityRegistry = artifacts.require('IdentityRegistry')
 var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
+var IdentityFactory = artifacts.require('IdentityFactory')
 var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -191,5 +192,24 @@ contract('IdentityManager', function(accounts) {
     } catch (error) {
       assert.include(String(error), 'VM Exception')
     }
+  })
+
+  it('should be able to be deployed with identity in one transaction', async function() {
+    // Deploy contracts
+    const counter = await Counter.new()
+    const identityFactory = await IdentityFactory.new()
+
+    // Create identity and manager with factory
+    const result = await identityFactory.createIdentityWithManager()
+    assert.equal(result.logs.length, 1)
+    const { identity, manager } = result.logs[0].args
+    assert.ok(identity)
+    assert.ok(manager)
+
+    // Test new contracts
+    const identityManager = IdentityManager.at(manager)
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
+    await identityManager.execute(counter.address, 0, encodedCall)
+    assert.equal((await counter.get()).toString(), '1')
   })
 })
