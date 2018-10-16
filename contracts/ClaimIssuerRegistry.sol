@@ -1,7 +1,6 @@
 pragma solidity ^0.4.24;
 
 import "./ERCXXXX_ClaimIssuerRegistry.sol";
-import "./ERCXXXX_ClaimIssuer.sol";
 import "./ERC780.sol";
 
 contract ClaimIssuerRegistry is ERCXXXX_ClaimIssuerRegistry {

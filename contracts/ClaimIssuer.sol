@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./ERCXXXX_ClaimIssuer.sol";
+import "./ERCXXXX_ClaimIssuerRegistry.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract ClaimIssuer is ERCXXXX_ClaimIssuer, Ownable {
