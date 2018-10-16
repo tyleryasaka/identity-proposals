@@ -11,6 +11,6 @@ contract ERCXXXX_ClaimIssuer {
 }
 
 contract ERCXXXX_ClaimIssuerRegistry {
-    function setIssuer(address claimIssuer) public;
+    function setClaimIssuer(address claimIssuer) public;
     function getClaim(address issuer, address subject, bytes32 key) public constant returns(bytes32);
 }

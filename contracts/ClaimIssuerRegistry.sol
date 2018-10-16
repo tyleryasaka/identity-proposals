@@ -11,7 +11,7 @@ contract ClaimIssuerRegistry is ERCXXXX_ClaimIssuerRegistry {
       registry780 = ERC780(_registry780);
     }
 
-    function setIssuer(address claimIssuer) public {
+    function setClaimIssuer(address claimIssuer) public {
         issuers[msg.sender] = claimIssuer;
     }
 

@@ -42,8 +42,8 @@ contract('ClaimIssuerRegistry', function(accounts) {
     const claimIssuerRegistry = await ClaimIssuerRegistry.new(claimRegistry780.address)
     const claimIssuer = await ClaimIssuer.new()
 
-    // Call setIssuer
-    await claimIssuerRegistry.setIssuer(claimIssuer.address)
+    // Call setClaimIssuer
+    await claimIssuerRegistry.setClaimIssuer(claimIssuer.address)
 
     // Call setClaim
     await claimIssuer.setClaim(accounts[1], claimKey, claimValue)
