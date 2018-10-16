@@ -105,7 +105,15 @@ contract('Identity', function(accounts) {
       await identityWithManager.transferOwnership(identityManager.address)
     })
 
-    it('without manager', async function() {
+    it('without identity or manager', async function() {
+      // Call counter.increment
+      await counter.increment()
+
+      // Check that increment was called
+      assert.equal((await counter.get()).toString(), '1')
+    })
+
+    it('with identity, without manager', async function() {
       // Call counter.increment from identity
       const encodedCall = getEncodedCall(web3, counter, 'increment')
       await identity.execute(counter.address, 0, encodedCall)
@@ -114,7 +122,7 @@ contract('Identity', function(accounts) {
       assert.equal((await counter.get()).toString(), '1')
     })
 
-    it('with manager', async function() {
+    it('with identity and manager', async function() {
       // Call counter.increment from identity, through identity manager
       const encodedCall = getEncodedCall(web3, counter, 'increment')
       await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
