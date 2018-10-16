@@ -11,11 +11,11 @@ contract ClaimIssuerRegistry is ERCXXXX_ClaimIssuerRegistry {
       registry780 = ERC780(_registry780);
     }
 
-    function setClaimIssuer(address claimIssuer) public {
+    function setClaimIssuer(address claimIssuer) external {
         issuers[msg.sender] = claimIssuer;
     }
 
-    function getClaim(address issuer, address subject, bytes32 key) public constant returns(bytes32) {
+    function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32) {
         address issuerAddress = issuers[issuer];
         if (issuerAddress != 0x0000000000000000000000000000000000000000) {
             ERCXXXX_ClaimIssuer claimIssuer = ERCXXXX_ClaimIssuer(issuerAddress);

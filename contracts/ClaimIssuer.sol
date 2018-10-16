@@ -25,15 +25,15 @@ contract ClaimIssuer is ERCXXXX_ClaimIssuer, Ownable {
         emit ClaimSet(subject, key, value, now);
     }
 
-    function setSelfClaim(bytes32 key, bytes32 value) public onlyOwner {
+    function setSelfClaim(bytes32 key, bytes32 value) external onlyOwner {
         setClaim(address(this), key, value);
     }
 
-    function getClaim(address subject, bytes32 key) public view returns(bytes32) {
+    function getClaim(address subject, bytes32 key) external view returns(bytes32) {
         return claims[subject][key];
     }
 
-    function removeClaim(address subject, bytes32 key) public onlyOwner {
+    function removeClaim(address subject, bytes32 key) external onlyOwner {
         delete claims[subject][key];
         emit ClaimRemoved(subject, key, now);
     }

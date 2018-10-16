@@ -6,11 +6,11 @@ pragma solidity ^0.4.24;
     If the claim registry does not exist, ERC780 should be used.
 */
 
-contract ERCXXXX_ClaimIssuer {
-    function getClaim(address subject, bytes32 key) public constant returns(bytes32);
+interface ERCXXXX_ClaimIssuer {
+    function getClaim(address subject, bytes32 key) external constant returns(bytes32);
 }
 
-contract ERCXXXX_ClaimIssuerRegistry {
-    function setClaimIssuer(address claimIssuer) public;
-    function getClaim(address issuer, address subject, bytes32 key) public constant returns(bytes32);
+interface ERCXXXX_ClaimIssuerRegistry {
+    function setClaimIssuer(address claimIssuer) external;
+    function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32);
 }

@@ -17,16 +17,16 @@ contract Identity is ERCXXXX_Identity {
       _;
     }
 
-    function owner() public view returns(address) {
+    function owner() external view returns(address) {
         return _owner;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0));
         _owner = newOwner;
     }
 
-    function execute(address _to, uint256 _value, bytes _data) public onlyOwner returns (bool _success) {
+    function execute(address _to, uint256 _value, bytes _data) external onlyOwner returns (bool _success) {
         _success = _to.call(_data, _value);
         if (_success) {
             emit Executed(_to, _value, _data);

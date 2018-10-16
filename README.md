@@ -63,13 +63,13 @@ This is for now a placeholder, until I have had time to think through this furth
 ### ERCXXXX_Identity
 
 ```
-contract ERCXXXX_Identity {
+interface ERCXXXX_Identity {
     event Executed(address indexed to, uint256 indexed value, bytes data);
     event ExecutionFailed(address indexed to, uint256 indexed value, bytes data);
 
-    function owner() public view returns(address);
-    function transferOwnership(address newOwner) public;
-    function execute(address _to, uint256 _value, bytes _data) public returns (bool _success);
+    function owner() external view returns(address);
+    function transferOwnership(address newOwner) external;
+    function execute(address _to, uint256 _value, bytes _data) external returns (bool _success);
 }
 ```
 
@@ -78,13 +78,13 @@ This is heavily inspired by ERC725, but it strips out all of the key management 
 ### ERCXXXX_ClaimIssuer
 
 ```
-contract ERCXXXX_ClaimIssuer {
-    function getClaim(address subject, bytes32 key) public constant returns(bytes32);
+interface ERCXXXX_ClaimIssuer {
+    function getClaim(address subject, bytes32 key) external constant returns(bytes32);
 }
 
-contract ERCXXXX_ClaimIssuerRegistry {
-    function setClaimIssuer(address claimIssuer) public;
-    function getClaim(address issuer, address subject, bytes32 key) public constant returns(bytes32);
+interface ERCXXXX_ClaimIssuerRegistry {
+    function setClaimIssuer(address claimIssuer) external;
+    function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32);
 }
 ```
 
