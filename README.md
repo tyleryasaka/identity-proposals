@@ -56,24 +56,43 @@ I actually like ERC1056. However, it does not address universal login. (It does 
 
 ## Proposed Standards
 
-### ERCXXXX_KeyManager
-
-This is for now a placeholder, until I have had time to think through this further. That said, an easy starting place would be to use the key management functions of ERC725, as I suggested in my [Medium post](https://medium.com/@tyleryasaka/erc725-proposed-changes-ea2dc221136e). The value I can see in standardizing this is around UI. Might add value in allowing multiple clients to help a user manage an identity.
-
 ### ERCXXXX_Identity
 
 ```
+pragma solidity ^0.4.24;
+
 interface ERCXXXX_Identity {
     event Executed(address indexed to, uint256 indexed value, bytes data);
     event ExecutionFailed(address indexed to, uint256 indexed value, bytes data);
 
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
-    function execute(address _to, uint256 _value, bytes _data) external returns (bool _success);
+    function execute(address to, uint256 value, bytes data) external returns (bool);
+}
+
+interface ERCXXXX_IdentityManager {
+    event RoleAdded(address indexed actor, uint256 indexed level);
+    event RoleRemoved(address indexed actor);
+    event Executed(address indexed to, uint256 indexed value, bytes data);
+
+    function hasRole(address actor, uint256 level) external view returns(bool);
+    function addRole(address actor, uint256 level) external;
+    function removeRole(address actor) external;
+    function execute(address to, uint256 value, bytes data) external;
+    function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external;
 }
 ```
 
-This is heavily inspired by ERC725, but it strips out all of the key management functions.
+This is heavily inspired by ERC725, but it decouples the identity proxy from the management functions. It also simplifies management. This is not to say more complex management schemes cannot be used, but I think the standard so define the expected, common use case.
+
+The roles in in the identity manager can be used for off-chain message signing as well as on-chain transaction execution.
+
+I suggest the following representation of role levels:
+
+- 0: no role
+- 1: management role (all privileges)
+- 2: action role (can execute transactions but cannot manage roles)
+- 3: encryption role (cannot perform any on-chain actions; used for off-chain message signing and verification)
 
 ### ERCXXXX_ClaimIssuer
 
@@ -92,7 +111,7 @@ This is inspired by ERC780, but it allows the issuer to implement the `getClaim`
 
 There is a global `ClaimIssuerRegistry` contract, which simply allows a `ClaimIssuer` contract to be associated with an issuer address. This allows the issuer to implement their own custom issuing contract, which is flexible and allows computable claims to be implemented.
 
-The `getClaim` method on the `ClaimIssuerRegistry` contract **must** be implemented as follows: if the given `issuer` does not have an associated `ClaimIssuer` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimIssuer` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
+The `getClaim` method on the `ClaimIssuerRegistry` contract MUST be implemented as follows: if the given `issuer` does not have an associated `ClaimIssuer` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimIssuer` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
 
 ## This Codebase
 
