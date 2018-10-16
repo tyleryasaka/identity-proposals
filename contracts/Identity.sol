@@ -17,6 +17,10 @@ contract Identity is ERCXXXX_Identity {
       _;
     }
 
+    function owner() public view returns(address) {
+        return _owner;
+    }
+
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
         _owner = newOwner;
