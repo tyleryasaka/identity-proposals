@@ -8,11 +8,22 @@ var Web3 = require('web3')
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const delegateType = '0x0000000000000000000000000000000000000000000000000000000000000abc'
-const web3 = new Web3()
+const web3 = new Web3(Web3.givenProvider)
 
 const getEncodedCall = (web3, instance, method, params = []) => {
   const contract = new web3.eth.Contract(instance.abi)
   return contract.methods[method](...params).encodeABI()
+}
+
+const sign = async (params, account) => {
+  const signatureData = web3.utils.soliditySha3(...params)
+  let signature = await web3.eth.sign(signatureData, account)
+  signature = signature.substr(2); //remove 0x
+  const r = '0x' + signature.slice(0, 64)
+  const s = '0x' + signature.slice(64, 128)
+  let v = '0x' + signature.slice(128, 130)
+  v = web3.utils.toDecimal(v) + 27
+  return { v, r, s }
 }
 
 contract('Identity', function(accounts) {
@@ -122,17 +133,60 @@ contract('IdentityManager', function(accounts) {
     const emptyRole = 0
 
     // add role
-    identityManager.addRole(accounts[1], actionRole)
+    await identityManager.addRole(accounts[1], actionRole)
 
     // check that role was added
     let hasRole = await identityManager.hasRole(accounts[1], actionRole)
     assert.equal(hasRole, true)
 
     // remove role
-    identityManager.removeRole(accounts[1])
+    await identityManager.removeRole(accounts[1])
 
     // check that role was removed
     hasRole = await identityManager.hasRole(accounts[1], actionRole)
     assert.equal(hasRole, false)
+  })
+
+  it('should allow execution for action roles', async function() {
+    const identity = await Identity.new()
+    const identityManager = await IdentityManager.new(identity.address)
+    const counter = await Counter.new()
+    const actionRole = 2
+    await identity.transferOwnership(identityManager.address)
+
+    // add role
+    await identityManager.addRole(accounts[1], actionRole)
+
+    // execute counter
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
+    await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+    assert.equal((await counter.get()).toString(), '1')
+
+    // execute counter, signed
+    let nonce = 0
+    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+    assert.equal((await counter.get()).toString(), '2')
+
+    // remove role
+    await identityManager.removeRole(accounts[1])
+
+    // execute counter should fail
+    try {
+      await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
+
+    // execute counter, signed should fail
+    try {
+      nonce++
+      ({ v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1]))
+      await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
   })
 })
