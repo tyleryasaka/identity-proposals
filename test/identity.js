@@ -38,7 +38,7 @@ contract('Identity', function(accounts) {
     assert.equal(result.logs[0].args.data, encodedCall)
   })
 
-  it('should be able to integrate with a key manager', async function() {
+  it('should be able to integrate with identity manager', async function() {
     // Deploy contracts
     const identity = await Identity.new()
     const counter = await Counter.new()
@@ -111,5 +111,28 @@ contract('Identity', function(accounts) {
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
     })
+  })
+})
+
+contract('IdentityManager', function(accounts) {
+  it('should be able to add and remove roles', async function() {
+    const identity = await Identity.new()
+    const identityManager = await IdentityManager.new(identity.address)
+    const actionRole = 2
+    const emptyRole = 0
+
+    // add role
+    identityManager.addRole(accounts[1], actionRole)
+
+    // check that role was added
+    let hasRole = await identityManager.hasRole(accounts[1], actionRole)
+    assert.equal(hasRole, true)
+
+    // remove role
+    identityManager.removeRole(accounts[1])
+
+    // check that role was removed
+    hasRole = await identityManager.hasRole(accounts[1], actionRole)
+    assert.equal(hasRole, false)
   })
 })
