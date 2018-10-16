@@ -29,7 +29,7 @@ const sign = async (params, account) => {
 contract('Identity', function(accounts) {
   it('should allow the owner to call execute', async function() {
     // Deploy contracts
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const counter = await Counter.new()
     const identityRegistry = await IdentityRegistry.new()
 
@@ -51,7 +51,7 @@ contract('Identity', function(accounts) {
 
   it('should be able to integrate with identity manager', async function() {
     // Deploy contracts
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const counter = await Counter.new()
 
     // Counter should be 0 initially
@@ -71,7 +71,7 @@ contract('Identity', function(accounts) {
 
   it('should own itself via ERC1056', async function() {
     // Deploy contracts
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const identityRegistry = await IdentityRegistry.new()
 
     // Check that identity owns itself via ERC1056
@@ -81,7 +81,7 @@ contract('Identity', function(accounts) {
 
   it('should be able to make a claim via ERC780', async function() {
     // Deploy contracts
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const claimRegistry780 = await ClaimRegistry780.new()
 
     // Call setClaim using identity
@@ -98,8 +98,8 @@ contract('Identity', function(accounts) {
     let identity, identityWithManager, counter, identityManager
 
     beforeEach(async function() {
-      identity = await Identity.new()
-      identityWithManager = await Identity.new()
+      identity = await Identity.new(accounts[0])
+      identityWithManager = await Identity.new(accounts[0])
       counter = await Counter.new()
       identityManager = await IdentityManager.new(identityWithManager.address, { from: accounts[1] })
       await identityWithManager.transferOwnership(identityManager.address)
@@ -135,7 +135,7 @@ contract('Identity', function(accounts) {
 
 contract('IdentityManager', function(accounts) {
   it('should be able to add and remove roles', async function() {
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const identityManager = await IdentityManager.new(identity.address)
     const actionRole = 2
     const emptyRole = 0
@@ -156,7 +156,7 @@ contract('IdentityManager', function(accounts) {
   })
 
   it('should allow execution for action roles', async function() {
-    const identity = await Identity.new()
+    const identity = await Identity.new(accounts[0])
     const identityManager = await IdentityManager.new(identity.address)
     const counter = await Counter.new()
     const actionRole = 2

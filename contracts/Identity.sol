@@ -1,20 +1,19 @@
 pragma solidity ^0.4.24;
 
 import "./ERCXXXX_Identity.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /* TODO: implement ERC165 */
 
 contract Identity is ERCXXXX_Identity {
     address private _owner;
 
-    constructor() public {
-      _owner = msg.sender;
+    constructor(address owner) public {
+        _owner = owner;
     }
 
     modifier onlyOwner() {
-      require(msg.sender == _owner);
-      _;
+        require(msg.sender == _owner);
+        _;
     }
 
     function owner() external view returns(address) {
