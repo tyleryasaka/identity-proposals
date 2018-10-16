@@ -2,27 +2,63 @@ pragma solidity ^0.4.24;
 
 import "./ERCXXXX_Identity.sol";
 import "./ERCXXXX_KeyManager.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /* This is a *very* poorly implemented key management contract. It is for demonstration purposes only. */
 
-contract IdentityManager is ERCXXXX_KeyManager, Ownable {
-    ERCXXXX_Identity identity;
+contract IdentityManager is ERCXXXX_KeyManager {
+    uint256 constant EMPTY_ROLE = 0;
+    uint256 constant MANAGEMENT_ROLE = 1;
+    uint256 constant ACTION_ROLE = 2;
+    uint256 constant ENCRYPTION_ROLE = 3;
 
-    constructor (address _identity) public {
-        identity = ERCXXXX_Identity(_identity);
+    mapping(address => uint256) private _roles;
+    uint256 public nonce;
+    ERCXXXX_Identity private _identity;
+
+    modifier onlyManagement() {
+      require(_hasRole(msg.sender, MANAGEMENT_ROLE));
+      _;
     }
 
-    function getKey(bytes32 _key) public view returns(uint256[] purposes, uint256 keyType, bytes32 key) {}
-    function keyHasPurpose(bytes32 _key, uint256 _purpose) public view returns (bool exists) {}
-    function getKeysByPurpose(uint256 _purpose) public view returns(bytes32[] keys) {}
-    function addKey(bytes32 _key, uint256 _purpose, uint256 _keyType) public returns (bool success) {}
-    function removeKey(bytes32 _key, uint256 _purpose) public returns (bool success) {}
-
-    function execute(address _to, uint256 _value, bytes _data) public onlyOwner returns (uint256 executionId) {
-        identity.execute(_to, _value, _data);
-        return 0;
+    modifier onlyAction() {
+      require(_hasRole(msg.sender, ACTION_ROLE));
+      _;
     }
 
-    function approve(uint256 _id, bool _approve) public returns (bool success) {}
+    constructor (address identity) public {
+        _identity = ERCXXXX_Identity(identity);
+        _roles[msg.sender] = MANAGEMENT_ROLE;
+    }
+
+    function hasRole(address actor, uint256 level) external view returns(bool) {
+        return _hasRole(actor, level);
+    }
+
+    function _hasRole(address actor, uint256 level) private view returns(bool) {
+        return (_roles[actor] != EMPTY_ROLE) && (_roles[actor] <= level);
+    }
+
+    function addRole(address actor, uint256 level) external onlyManagement {
+        _roles[actor] = level;
+        emit RoleAdded(actor, level);
+    }
+
+    function removeRole(address actor) external onlyManagement {
+        _roles[actor] = EMPTY_ROLE;
+        emit RoleRemoved(actor);
+    }
+
+    function execute(address to, uint256 value, bytes data) external onlyAction {
+        _identity.execute(to, value, data);
+        emit Executed(to, value, data);
+    }
+
+    function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external {
+        bytes32 signatureData = keccak256(abi.encodePacked(address(this), to, value, executionData, nonce));
+        address signer = ecrecover(signatureData, v, r, s);
+        require(_hasRole(signer, ACTION_ROLE));
+        nonce++;
+        _identity.execute(to, value, executionData);
+        emit Executed(to, value, executionData);
+    }
 }
