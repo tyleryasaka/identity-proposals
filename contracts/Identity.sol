@@ -7,7 +7,6 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract Identity is ERCXXXX_Identity {
     address private _owner;
-    mapping(bytes32 => address) delegates;
 
     constructor() public {
       _owner = msg.sender;
@@ -30,14 +29,5 @@ contract Identity is ERCXXXX_Identity {
         } else {
             emit ExecutionFailed(_to, _value, _data);
         }
-    }
-
-    function setDelegate(bytes32 delegateType, address delegate) public {
-        delegates[delegateType] = delegate;
-        emit DelegateSet(delegateType, delegate);
-    }
-
-    function getDelegate(bytes32 delegateType) public view returns (address delegate) {
-        return delegates[delegateType];
     }
 }

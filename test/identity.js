@@ -83,19 +83,6 @@ contract('Identity', function(accounts) {
     assert.equal(claim, claimValue)
   })
 
-  it('should be able to set and get delegates', async function() {
-    // Deploy contracts
-    const identity = await Identity.new()
-    const counter = await Counter.new()
-
-    // Call setDelegate
-    await identity.setDelegate(delegateType, counter.address)
-
-    // Call getDelegate
-    const pointer = await identity.getDelegate(delegateType)
-    assert.equal(pointer, counter.address)
-  })
-
   describe('gas cost comparison', async function() {
     let identity, identityWithManager, counter, identityManager
 
