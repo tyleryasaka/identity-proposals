@@ -57,7 +57,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedData = keccak256(prefix, signatureData);
         address recovered = ecrecover(prefixedData, v, r, s);
-        require(_hasRole(recovered, ACTION_ROLE), "Must have manager role");
+        require(_hasRole(recovered, ACTION_ROLE), "Must have action role");
         nonce++;
         _identity.execute(to, value, executionData);
         emit Executed(to, value, executionData);
