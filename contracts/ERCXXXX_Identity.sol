@@ -1,18 +1,12 @@
 pragma solidity ^0.4.24;
 
 interface ERCXXXX_Identity {
-    event Executed(address indexed to, uint256 indexed value, bytes data);
-
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
     function execute(address to, uint256 value, bytes data) external;
 }
 
 interface ERCXXXX_IdentityManager {
-    event RoleAdded(address indexed actor, uint256 indexed level);
-    event RoleRemoved(address indexed actor);
-    event Executed(address indexed to, uint256 indexed value, bytes data);
-
     function hasRole(address actor, uint256 level) external view returns(bool);
     function addRole(address actor, uint256 level) external;
     function removeRole(address actor) external;

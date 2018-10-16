@@ -39,17 +39,14 @@ contract IdentityManager is ERCXXXX_IdentityManager {
 
     function addRole(address actor, uint256 level) external onlyManagement {
         _roles[actor] = level;
-        emit RoleAdded(actor, level);
     }
 
     function removeRole(address actor) external onlyManagement {
         _roles[actor] = EMPTY_ROLE;
-        emit RoleRemoved(actor);
     }
 
     function execute(address to, uint256 value, bytes data) external onlyAction {
         _identity.execute(to, value, data);
-        emit Executed(to, value, data);
     }
 
     function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external {
@@ -60,6 +57,5 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         require(_hasRole(recovered, ACTION_ROLE), "Must have action role");
         nonce++;
         _identity.execute(to, value, executionData);
-        emit Executed(to, value, executionData);
     }
 }

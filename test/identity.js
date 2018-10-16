@@ -42,11 +42,6 @@ contract('Identity', function(accounts) {
 
     // Check that increment was called
     assert.equal((await counter.get()).toString(), '1')
-    assert.equal(result.logs.length, 1)
-    assert.equal(result.logs[0].event, 'Executed')
-    assert.equal(result.logs[0].args.to, counter.address)
-    assert.equal(result.logs[0].args.value, 0)
-    assert.equal(result.logs[0].args.data, encodedCall)
   })
 
   it('should be able to integrate with identity manager', async function() {
