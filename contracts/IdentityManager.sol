@@ -1,11 +1,10 @@
 pragma solidity ^0.4.24;
 
 import "./ERCXXXX_Identity.sol";
-import "./ERCXXXX_KeyManager.sol";
 
 /* This is a *very* poorly implemented key management contract. It is for demonstration purposes only. */
 
-contract IdentityManager is ERCXXXX_KeyManager {
+contract IdentityManager is ERCXXXX_IdentityManager {
     uint256 constant EMPTY_ROLE = 0;
     uint256 constant MANAGEMENT_ROLE = 1;
     uint256 constant ACTION_ROLE = 2;
