@@ -12,11 +12,11 @@ When designing these standards, I think it is important to be crystal clear rega
 
 Here I want to fill an important gap that I think exists in the Ethereum ecosystem. For all intents and purposes, wallets are essentially acting as users' identities on the blockchain. This forbids any sort of wise identity management solution. Such a solution would allow keys to be rotated over time, and would allow for a hierarchy of keys for management. A master key might grant you full control of your identity, but would be something that you would want to keep somewhere safe (i.e. not on your phone). However, you could have a lower level key that you carry on your phone. If you lose your phone and think the private key could be compromised, no problem. You can simply use your master key to remove that key. Bottom line: we want to decouple the wallet from the identity.
 
-This is related to [meta transactions](https://medium.com/@austin_48503/ethereum-meta-transactions-90ccf0859e84).
-
 I believe there is value in standardizing a universal login; this allows users to be able to manage their identity across various browsers/clients.
 
 Picture this: a user is browing a Dapp on Chrome with Metamask. They do something in the Dapp which triggers the Metamask popup window. They see the normal transaction flow, but instead of seeing the wallet, they see the identity that they are logged in as. The transaction executes on the blockchain, but interestingly: the wallet makes the transaction call, but on the Dapp, the identity's address is displayed as the author of the call (not the wallet). This is because the identity is a proxy contract, and the wallet simply told the identity what action to perform.
+
+Another possibility that emerges when you decouple wallet from identity: [meta transactions](https://medium.com/@austin_48503/ethereum-meta-transactions-90ccf0859e84). It would be possible now for someone to browse *and interact on* a web3 Dapp using their own identity *but with no ETH*. Applications would have the option to pay for their users' transactions.
 
 ### 2. Claims
 
