@@ -83,7 +83,7 @@ interface ERCXXXX_IdentityManager {
 }
 ```
 
-This is heavily inspired by ERC725, but it decouples the identity proxy from the management functions. It also simplifies management. This is not to say more complex management schemes cannot be used, but I think the standard so define the expected, common use case.
+This is heavily inspired by ERC725, but it decouples the identity proxy from the management functions. It also simplifies management by only using Ethereum addresses as keys (which I have renamed to `roles`). I think this is adequate and sufficient for the overwhelming majority of use cases relating to end users, meta transactions, and universal login. If more advanced signature schemes are desired, there is nothing preventing anyone from adding additional methods to an identity manager contract.
 
 The roles in in the identity manager can be used for off-chain message signing as well as on-chain transaction execution.
 
