@@ -85,6 +85,8 @@ I suggest the following representation of role levels:
 - 2: action role (can execute transactions but cannot manage roles)
 - 3: encryption role (cannot perform any on-chain actions; used for off-chain message signing and verification)
 
+**Caveat**: This essentially adds 2 layers of contract call forwarding, which currently increases the gas cost *per execution* by about ~7000 (see the tests in this repo for a demonstration of this). This could be cut in half by removing the thin proxy layer, but then you would lose upgradability.
+
 ### ERCXXXX_ClaimIssuer
 
 ```
