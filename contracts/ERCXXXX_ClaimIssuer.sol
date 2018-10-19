@@ -11,6 +11,8 @@ interface ERCXXXX_ClaimManager {
 }
 
 interface ERCXXXX_ClaimIssuerRegistry {
+    event ClaimManagerSet(address issuer, address claimManager);
+
     function setClaimManager(address claimManager) external;
     function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32);
 }

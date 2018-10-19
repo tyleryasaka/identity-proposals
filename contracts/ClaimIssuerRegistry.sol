@@ -13,6 +13,7 @@ contract ClaimIssuerRegistry is ERCXXXX_ClaimIssuerRegistry {
 
     function setClaimManager(address claimManager) external {
         claimManagers[msg.sender] = claimManager;
+        emit ClaimManagerSet(msg.sender, claimManager);
     }
 
     function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32) {
