@@ -4,22 +4,22 @@ import "./ERCXXXX_ClaimIssuer.sol";
 import "./ERC780.sol";
 
 contract ClaimIssuerRegistry is ERCXXXX_ClaimIssuerRegistry {
-    mapping(address => address) public issuers;
+    mapping(address => address) public claimManagers;
     ERC780 public registry780;
 
     constructor(address _registry780) public {
       registry780 = ERC780(_registry780);
     }
 
-    function setClaimIssuer(address claimIssuer) external {
-        issuers[msg.sender] = claimIssuer;
+    function setClaimManager(address claimManager) external {
+        claimManagers[msg.sender] = claimManager;
     }
 
     function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32) {
-        address issuerAddress = issuers[issuer];
-        if (issuerAddress != 0x0000000000000000000000000000000000000000) {
-            ERCXXXX_ClaimIssuer claimIssuer = ERCXXXX_ClaimIssuer(issuerAddress);
-            return claimIssuer.getClaim(subject, key);
+        address claimManagerAddress = claimManagers[issuer];
+        if (claimManagerAddress != 0x0000000000000000000000000000000000000000) {
+            ERCXXXX_ClaimManager claimManager = ERCXXXX_ClaimManager(claimManagerAddress);
+            return claimManager.getClaim(subject, key);
         } else {
             return registry780.getClaim(issuer, subject, key);
         }

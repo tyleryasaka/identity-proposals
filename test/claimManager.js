@@ -1,4 +1,4 @@
-var ClaimIssuer = artifacts.require('ClaimIssuer')
+var ClaimManager = artifacts.require('ClaimManager')
 var ClaimIssuerRegistry = artifacts.require('ClaimIssuerRegistry')
 var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
 var Web3 = require('web3')
@@ -6,7 +6,7 @@ var Web3 = require('web3')
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const emptyClaim = '0x0000000000000000000000000000000000000000000000000000000000000000'
-const claimIssuerDelegateKey = '0x0000000000000000000000000000000000000000000000000000000000000123'
+const claimManagerDelegateKey = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const web3 = new Web3()
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -14,39 +14,39 @@ const getEncodedCall = (web3, instance, method, params = []) => {
   return contract.methods[method](...params).encodeABI()
 }
 
-contract('ClaimIssuer', function(accounts) {
+contract('ClaimManager', function(accounts) {
   it('should be able to manage claims as the issuer', async function() {
     // Deploy contracts
-    const claimIssuer = await ClaimIssuer.new()
+    const claimManager = await ClaimManager.new()
 
     // Call setClaim
-    await claimIssuer.setClaim(accounts[1], claimKey, claimValue)
+    await claimManager.setClaim(accounts[1], claimKey, claimValue)
 
     // Call getClaim
-    const claim = await claimIssuer.getClaim(accounts[1], claimKey)
+    const claim = await claimManager.getClaim(accounts[1], claimKey)
     assert.equal(claim, claimValue)
 
     // Call removeClaim
-    await claimIssuer.removeClaim(accounts[1], claimKey)
+    await claimManager.removeClaim(accounts[1], claimKey)
 
     // Chefck that claim was removed
-    const removedClaim = await claimIssuer.getClaim(accounts[1], claimKey)
+    const removedClaim = await claimManager.getClaim(accounts[1], claimKey)
     assert.equal(removedClaim, emptyClaim)
   })
 })
 
 contract('ClaimIssuerRegistry', function(accounts) {
-  it('should integrate with ClaimIssuer', async function() {
+  it('should integrate with ClaimManager', async function() {
     // Deploy contracts
     const claimRegistry780 = ClaimRegistry780.new()
     const claimIssuerRegistry = await ClaimIssuerRegistry.new(claimRegistry780.address)
-    const claimIssuer = await ClaimIssuer.new()
+    const claimManager = await ClaimManager.new()
 
-    // Call setClaimIssuer
-    await claimIssuerRegistry.setClaimIssuer(claimIssuer.address)
+    // Call setClaimManager
+    await claimIssuerRegistry.setClaimManager(claimManager.address)
 
     // Call setClaim
-    await claimIssuer.setClaim(accounts[1], claimKey, claimValue)
+    await claimManager.setClaim(accounts[1], claimKey, claimValue)
 
     // Call getClaim
     const claim = await claimIssuerRegistry.getClaim(accounts[0], accounts[1], claimKey)

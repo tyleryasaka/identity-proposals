@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 import "./ERCXXXX_ClaimIssuer.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract ClaimIssuer is ERCXXXX_ClaimIssuer, Ownable {
+contract ClaimManager is ERCXXXX_ClaimManager, Ownable {
     event ClaimSet(
         address indexed subject,
         bytes32 indexed key,

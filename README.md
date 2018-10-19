@@ -85,24 +85,24 @@ I suggest the following representation of role levels:
 - 2: action role (can execute transactions but cannot manage roles)
 - 3: encryption role (cannot perform any on-chain actions; used for off-chain message signing and verification)
 
-### ERCXXXX_ClaimIssuer
+### ERCXXXX_ClaimManager
 
 ```
-interface ERCXXXX_ClaimIssuer {
+interface ERCXXXX_ClaimManager {
     function getClaim(address subject, bytes32 key) external constant returns(bytes32);
 }
 
 interface ERCXXXX_ClaimIssuerRegistry {
-    function setClaimIssuer(address claimIssuer) external;
+    function setClaimManager(address claimManager) external;
     function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32);
 }
 ```
 
 This is inspired by ERC780, but it allows the issuer to implement the `getClaim` method however they like (it just needs to conform to the interface). *It is fully backwards compatible with ERC780.*
 
-There is a global `ClaimIssuerRegistry` contract, which simply allows a `ClaimIssuer` contract to be associated with an issuer address. This allows the issuer to implement their own custom issuing contract, which is flexible and allows computable claims to be implemented.
+There is a global `ClaimIssuerRegistry` contract, which simply allows a `ClaimManager` contract to be associated with an issuer address. This allows the issuer to implement their own custom issuing contract, which is flexible and allows computable claims to be implemented.
 
-The `getClaim` method on the `ClaimIssuerRegistry` contract MUST be implemented as follows: if the given `issuer` does not have an associated `ClaimIssuer` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimIssuer` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
+The `getClaim` method on the `ClaimIssuerRegistry` contract MUST be implemented as follows: if the given `issuer` does not have an associated `ClaimManager` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimManager` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
 
 ## This Codebase
 
