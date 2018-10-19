@@ -66,6 +66,9 @@ interface ERCXXXX_Identity {
 }
 
 interface ERCXXXX_IdentityManager {
+    event RoleAdded(address actor, uint256 level);
+    event RoleRemoved(address actor);
+
     function hasRole(address actor, uint256 level) external view returns(bool);
     function addRole(address actor, uint256 level) external;
     function removeRole(address actor) external;
@@ -93,6 +96,8 @@ interface ERCXXXX_ClaimManager {
 }
 
 interface ERCXXXX_ClaimIssuerRegistry {
+    event ClaimManagerSet(address issuer, address claimManager);
+
     function setClaimManager(address claimManager) external;
     function getClaim(address issuer, address subject, bytes32 key) external constant returns(bytes32);
 }
