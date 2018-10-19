@@ -27,6 +27,7 @@ contract Identity is ERCXXXX_Identity {
 
     function execute(address to, uint256 value, bytes data) external onlyOwner {
         require(executeCall(to, value, data));
+        emit Executed(to, value, data);
     }
 
     // Copied from uPort's Proxy, which copied from GnosisSafe
