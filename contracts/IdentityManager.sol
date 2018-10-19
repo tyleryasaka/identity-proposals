@@ -39,10 +39,12 @@ contract IdentityManager is ERCXXXX_IdentityManager {
 
     function addRole(address actor, uint256 level) external onlyManagement {
         _roles[actor] = level;
+        emit RoleAdded(actor, level);
     }
 
     function removeRole(address actor) external onlyManagement {
         _roles[actor] = EMPTY_ROLE;
+        emit RoleRemoved(actor);
     }
 
     function execute(address to, uint256 value, bytes data) external onlyAction {

@@ -7,6 +7,9 @@ interface ERCXXXX_Identity {
 }
 
 interface ERCXXXX_IdentityManager {
+    event RoleAdded(address actor, uint256 level);
+    event RoleRemoved(address actor);
+
     function hasRole(address actor, uint256 level) external view returns(bool);
     function addRole(address actor, uint256 level) external;
     function removeRole(address actor) external;
