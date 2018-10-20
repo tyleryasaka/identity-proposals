@@ -194,6 +194,32 @@ contract('IdentityManager', function(accounts) {
     }
   })
 
+  it('should not allow replay attacks', async function() {
+    const identity = await Identity.new(accounts[0])
+    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const counter = await Counter.new()
+    const actionRole = 2
+    await identity.transferOwnership(identityManager.address)
+
+    // add role
+    await identityManager.addRole(accounts[1], actionRole)
+
+    // execute counter, signed
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
+    let nonce = 0
+    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+    assert.equal((await counter.get()).toString(), '1')
+
+    // replay attack should fail
+    try {
+      await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[3] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
+  })
+
   it('should be able to be deployed with identity in one transaction', async function() {
     // Deploy contracts
     const counter = await Counter.new()
