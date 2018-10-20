@@ -11,7 +11,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     uint256 constant ENCRYPTION_ROLE = 3;
 
     mapping(address => uint256) private _roles;
-    uint256 public nonce;
+    mapping(bytes32 => uint256) public nonce;
     ERCXXXX_Identity private _identity;
 
     modifier onlyManagement() {
@@ -52,12 +52,13 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 signatureData = keccak256(abi.encodePacked(address(this), to, value, executionData, nonce));
+        bytes32 callHash = keccak256(abi.encodePacked(address(this), to, value, executionData));
+        bytes32 signatureData = keccak256(abi.encodePacked(callHash, nonce[callHash]));
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedData = keccak256(prefix, signatureData);
         address recovered = ecrecover(prefixedData, v, r, s);
         require(_hasRole(recovered, ACTION_ROLE), "Must have action role");
-        nonce++;
+        nonce[callHash]++;
         _identity.execute(to, value, executionData);
     }
 }
