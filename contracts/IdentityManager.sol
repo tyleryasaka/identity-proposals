@@ -78,9 +78,10 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         emit RoleAdded(actor, level);
     }
 
-    function addRoleSigned(address actor, uint256 level, bytes signatures) external {
+    function addRoleSigned(address actor, uint256 level, uint256 expiry, bytes signatures) external {
         bytes32 nonceKey = keccak256("addRoleSigned", actor, level);
-        bytes32 signatureData = keccak256(address(this), "addRoleSigned", actor, level, _nonce[nonceKey]);
+        bytes32 signatureData = keccak256(address(this), "addRoleSigned", actor, level, _nonce[nonceKey], expiry);
+        _checkExpiry(expiry);
         _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _roles[actor] = level;
@@ -92,9 +93,10 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         emit RoleRemoved(actor);
     }
 
-    function removeRoleSigned(address actor, bytes signatures) external {
+    function removeRoleSigned(address actor, uint256 expiry, bytes signatures) external {
         bytes32 nonceKey = keccak256("removeRoleSigned", actor);
-        bytes32 signatureData = keccak256(address(this), "removeRoleSigned", actor, _nonce[nonceKey]);
+        bytes32 signatureData = keccak256(address(this), "removeRoleSigned", actor, _nonce[nonceKey], expiry);
+        _checkExpiry(expiry);
         _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _roles[actor] = EMPTY_ROLE;

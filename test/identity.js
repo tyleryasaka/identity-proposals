@@ -140,8 +140,9 @@ contract('IdentityManager', function(accounts) {
     // add role, signed
     let nonceKey = web3.utils.soliditySha3("addRoleSigned", accounts[2], actionRole)
     let nonce = Number(await identityManager.getNonce(nonceKey))
-    let signature = await sign([identityManager.address, "addRoleSigned", accounts[2], actionRole, nonce], accounts[0])
-    await identityManager.addRoleSigned(accounts[2], actionRole, signature, { from: accounts[3] })
+    let expiry = Math.floor( Date.now() / 1000 ) + 100
+    let signature = await sign([identityManager.address, "addRoleSigned", accounts[2], actionRole, nonce, expiry], accounts[0])
+    await identityManager.addRoleSigned(accounts[2], actionRole, expiry, signature, { from: accounts[3] })
 
     // check that role was added
     hasRole = await identityManager.hasRole(accounts[2], actionRole)
@@ -157,8 +158,9 @@ contract('IdentityManager', function(accounts) {
     // remove role, signed
     nonceKey = web3.utils.soliditySha3("removeRoleSigned", accounts[2])
     nonce = Number(await identityManager.getNonce(nonceKey))
-    signature = await sign([identityManager.address, "removeRoleSigned", accounts[2], nonce], accounts[0])
-    await identityManager.removeRoleSigned(accounts[2], signature, { from: accounts[3] })
+    expiry = Math.floor( Date.now() / 1000 ) + 100
+    signature = await sign([identityManager.address, "removeRoleSigned", accounts[2], nonce, expiry], accounts[0])
+    await identityManager.removeRoleSigned(accounts[2], expiry, signature, { from: accounts[3] })
 
     // check that role was removed
     hasRole = await identityManager.hasRole(accounts[2], actionRole)
@@ -263,22 +265,28 @@ contract('IdentityManager', function(accounts) {
     const actionRole = 2
     await identity.transferOwnership(identityManager.address)
 
-    // add role
-    await identityManager.addRole(accounts[1], actionRole)
-
-    // execute counter, signed
-    const encodedCall = getEncodedCall(web3, counter, 'increment')
-    let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    // add role, signed with invalid expiry
+    let nonceKey = web3.utils.soliditySha3("addRoleSigned", accounts[1], actionRole)
     let nonce = Number(await identityManager.getNonce(nonceKey))
-    let expiry = Math.floor( Date.now() / 1000 ) + 100 // seconds since epoch, plus 100
-    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
-    assert.equal((await counter.get()).toString(), '1')
+    let expiry = Math.floor( Date.now() / 1000 ) - 100
+    let signature = await sign([identityManager.address, "addRoleSigned", accounts[1], actionRole, nonce, expiry], accounts[0])
+    try {
+      await identityManager.addRoleSigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
 
-    // with old expiry
+    // add role, signed with valid expiry
+    expiry = Math.floor( Date.now() / 1000 ) + 100
+    signature = await sign([identityManager.address, "addRoleSigned", accounts[1], actionRole, nonce, expiry], accounts[0])
+    await identityManager.addRoleSigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
+
+    // execute counter, signed with invalid expiry
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
     nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
     nonce = Number(await identityManager.getNonce(nonceKey))
-    expiry = Math.floor( Date.now() / 1000 ) - 100 // seconds since epoch, minus 100
+    expiry = Math.floor( Date.now() / 1000 ) - 100
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
     try {
       await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
@@ -286,5 +294,32 @@ contract('IdentityManager', function(accounts) {
     } catch (error) {
       assert.include(String(error), 'VM Exception')
     }
+
+    // execute counter, signed with valid expiry
+    expiry = Math.floor( Date.now() / 1000 ) + 100
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+    assert.equal((await counter.get()).toString(), '1')
+
+    // remove role, signed with invalid expiry
+    nonceKey = web3.utils.soliditySha3("removeRoleSigned", accounts[1])
+    nonce = Number(await identityManager.getNonce(nonceKey))
+    expiry = Math.floor( Date.now() / 1000 ) - 100
+    signature = await sign([identityManager.address, "removeRoleSigned", accounts[1], nonce, expiry], accounts[0])
+    try {
+      await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
+    let hasRole = await identityManager.hasRole(accounts[1], actionRole)
+    assert.equal(hasRole, true)
+
+    // add role, signed with valid expiry
+    expiry = Math.floor( Date.now() / 1000 ) + 100
+    signature = await sign([identityManager.address, "removeRoleSigned", accounts[1], nonce, expiry], accounts[0])
+    await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
+    hasRole = await identityManager.hasRole(accounts[1], actionRole)
+    assert.equal(hasRole, false)
   })
 })
