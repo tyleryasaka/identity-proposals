@@ -98,12 +98,12 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         _identity.execute(to, value, data);
     }
 
-    function executeSigned(address to, uint256 value, bytes executionData, bytes signatures) external {
-        bytes32 nonceKey = keccak256("executeSigned", to, value, executionData);
-        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, executionData, _nonce[nonceKey]);
+    function executeSigned(address to, uint256 value, bytes data, bytes signatures) external {
+        bytes32 nonceKey = keccak256("executeSigned", to, value, data);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey]);
         _checkSignature(ACTION_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
-        _identity.execute(to, value, executionData);
+        _identity.execute(to, value, data);
     }
 
     function getNonce(bytes32 nonceKey) external view returns (uint256) {
