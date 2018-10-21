@@ -72,8 +72,8 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function addRoleSigned(address actor, uint256 level, bytes signatures) external {
-        bytes32 nonceKey = keccak256(actor, level);
-        bytes32 signatureData = keccak256(address(this), actor, level, _nonce[nonceKey]);
+        bytes32 nonceKey = keccak256("addRoleSigned", actor, level);
+        bytes32 signatureData = keccak256(address(this), "addRoleSigned", actor, level, _nonce[nonceKey]);
         _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _roles[actor] = level;
@@ -86,8 +86,8 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function removeRoleSigned(address actor, bytes signatures) external {
-        bytes32 nonceKey = keccak256(actor);
-        bytes32 signatureData = keccak256(address(this), actor, _nonce[nonceKey]);
+        bytes32 nonceKey = keccak256("removeRoleSigned", actor);
+        bytes32 signatureData = keccak256(address(this), "removeRoleSigned", actor, _nonce[nonceKey]);
         _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _roles[actor] = EMPTY_ROLE;
@@ -99,8 +99,8 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function executeSigned(address to, uint256 value, bytes executionData, bytes signatures) external {
-        bytes32 nonceKey = keccak256(to, value, executionData);
-        bytes32 signatureData = keccak256(address(this), to, value, executionData, _nonce[nonceKey]);
+        bytes32 nonceKey = keccak256("executeSigned", to, value, executionData);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, executionData, _nonce[nonceKey]);
         _checkSignature(ACTION_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _identity.execute(to, value, executionData);
