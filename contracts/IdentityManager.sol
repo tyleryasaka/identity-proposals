@@ -9,6 +9,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     uint256 constant MANAGEMENT_ROLE = 1;
     uint256 constant ACTION_ROLE = 2;
     uint256 constant ENCRYPTION_ROLE = 3;
+    uint256 constant RECOVERY_ROLE = 4;
 
     mapping(address => uint256) private _roles;
     mapping(bytes32 => uint256) private _nonce;
