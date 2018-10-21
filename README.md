@@ -28,11 +28,13 @@ This may or not be a realistic real-world scenario in the near future, but regar
 
 ## Existing Standards
 
-The existing standards around identity and claims (that I am aware of and find relevant) are as follows:
+The existing standards around identity, claims, and universal login (that I am aware of) are as follows:
 - [ERC725](https://github.com/ethereum/EIPs/issues/725)
 - [ERC735](https://github.com/ethereum/EIPs/issues/735)
 - [ERC780](https://github.com/ethereum/EIPs/issues/780)
 - [ERC1056](https://github.com/ethereum/EIPs/issues/1056)
+- [ERC1077](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1077.md)
+- [ERC1078](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1078.md)
 
 ### ERC725 Concerns
 
@@ -54,12 +56,18 @@ Claims are attached to subject rather than issuer. Again, see [my Medium post](h
 
 I actually like ERC1056. However, it does not address universal login. (It does have the concept of an owner which is decoupled from the identity address. However, this is merely an association on a registry; it does not add the capability of the owner being able to send a transaction on behalf of the identity, where `msg.sender` is the identity address.)
 
+### ERC1077 Thoughts
+
+Just learning more about this. I feel that it may have too many params for the `executeSigned` method; also, it is intended to be used with ERC725. I'm exploring whether this can be simplified into a single universal login standard (essentially combining and simplifying ERC725/ERC1077).
+
 ## Proposed Standards
 
 ### ERCXXXX_Identity
 
 ```
 interface ERCXXXX_Identity {
+    event Executed(address to, uint256 value, bytes data);
+
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
     function execute(address to, uint256 value, bytes data) external;
@@ -71,9 +79,13 @@ interface ERCXXXX_IdentityManager {
 
     function hasRole(address actor, uint256 level) external view returns(bool);
     function addRole(address actor, uint256 level) external;
+    function addRoleSigned(address actor, uint256 level, uint256 expiry, bytes signatures) external;
     function removeRole(address actor) external;
+    function removeRoleSigned(address actor, uint256 expiry, bytes signatures) external;
     function execute(address to, uint256 value, bytes data) external;
-    function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external;
+    function executeSigned(address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external;
+    function getNonce(bytes32 nonceKey) external view returns (uint256);
+    function getRequiredSignatures(uint256 level) external view returns (uint);
 }
 ```
 
