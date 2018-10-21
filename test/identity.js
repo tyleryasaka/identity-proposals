@@ -16,9 +16,8 @@ const getEncodedCall = (web3, instance, method, params = []) => {
   return contract.methods[method](...params).encodeABI()
 }
 
-const sign = async (params, nonce, account) => {
-  const callHash = web3.utils.soliditySha3(...params)
-  const signatureData = web3.utils.soliditySha3(callHash, nonce)
+const sign = async (params, account) => {
+  const signatureData = web3.utils.soliditySha3(...params)
   let signature = await web3.eth.sign(signatureData, account)
   signature = signature.substr(2); //remove 0x
   const r = '0x' + signature.slice(0, 64)
@@ -168,8 +167,8 @@ contract('IdentityManager', function(accounts) {
     assert.equal((await counter.get()).toString(), '1')
 
     // execute counter, signed
-    let nonce = 0
-    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall], nonce, accounts[1])
+    let nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
+    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
@@ -185,9 +184,10 @@ contract('IdentityManager', function(accounts) {
     }
 
     // execute counter, signed should fail
+    nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
+    assert.equal(nonce, 1)
     try {
-      nonce++
-      ({ v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall], nonce, accounts[1]))
+      ({ v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1]))
       await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
       throw null;
     } catch (error) {
@@ -208,7 +208,7 @@ contract('IdentityManager', function(accounts) {
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
-    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall], nonce, accounts[1])
+    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 

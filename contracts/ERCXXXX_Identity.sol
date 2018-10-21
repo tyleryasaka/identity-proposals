@@ -17,4 +17,5 @@ interface ERCXXXX_IdentityManager {
     function removeRole(address actor) external;
     function execute(address to, uint256 value, bytes data) external;
     function executeSigned(address to, uint256 value, bytes executionData, uint8 v, bytes32 r, bytes32 s) external;
+    function getNonce(address to, uint256 value, bytes executionData) external view returns (uint256);
 }
