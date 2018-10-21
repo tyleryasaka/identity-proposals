@@ -18,13 +18,7 @@ const getEncodedCall = (web3, instance, method, params = []) => {
 
 const sign = async (params, account) => {
   const signatureData = web3.utils.soliditySha3(...params)
-  let signature = await web3.eth.sign(signatureData, account)
-  signature = signature.substr(2); //remove 0x
-  const r = '0x' + signature.slice(0, 64)
-  const s = '0x' + signature.slice(64, 128)
-  let v = '0x' + signature.slice(128, 130)
-  v = web3.utils.toDecimal(v) + 27
-  return { v, r, s }
+  return await web3.eth.sign(signatureData, account)
 }
 
 contract('Identity', function(accounts) {
@@ -168,8 +162,8 @@ contract('IdentityManager', function(accounts) {
 
     // execute counter, signed
     let nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
-    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+    let signature = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
     // remove role
@@ -187,8 +181,8 @@ contract('IdentityManager', function(accounts) {
     nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
     assert.equal(nonce, 1)
     try {
-      ({ v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1]))
-      await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+      signature = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
+      await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
       throw null;
     } catch (error) {
       assert.include(String(error), 'VM Exception')
@@ -208,13 +202,13 @@ contract('IdentityManager', function(accounts) {
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
-    let { v, r, s } = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[2] })
+    signature = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // replay attack should fail
     try {
-      await identityManager.executeSigned(counter.address, 0, encodedCall, v, r, s, { from: accounts[3] })
+      await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[3] })
       throw null;
     } catch (error) {
       assert.include(String(error), 'VM Exception')
