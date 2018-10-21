@@ -137,11 +137,31 @@ contract('IdentityManager', function(accounts) {
     let hasRole = await identityManager.hasRole(accounts[1], actionRole)
     assert.equal(hasRole, true)
 
+    // add role, signed
+    let nonceKey = web3.utils.soliditySha3(accounts[2], actionRole)
+    let nonce = Number(await identityManager.getNonce(nonceKey))
+    let signature = await sign([identityManager.address, accounts[2], actionRole, nonce], accounts[0])
+    await identityManager.addRoleSigned(accounts[2], actionRole, signature, { from: accounts[3] })
+
+    // check that role was added
+    hasRole = await identityManager.hasRole(accounts[2], actionRole)
+    assert.equal(hasRole, true)
+
     // remove role
     await identityManager.removeRole(accounts[1])
 
     // check that role was removed
     hasRole = await identityManager.hasRole(accounts[1], actionRole)
+    assert.equal(hasRole, false)
+
+    // remove role, signed
+    nonceKey = web3.utils.soliditySha3(accounts[2])
+    nonce = Number(await identityManager.getNonce(nonceKey))
+    signature = await sign([identityManager.address, accounts[2], nonce], accounts[0])
+    await identityManager.removeRoleSigned(accounts[2], signature, { from: accounts[3] })
+
+    // check that role was removed
+    hasRole = await identityManager.hasRole(accounts[2], actionRole)
     assert.equal(hasRole, false)
   })
 
@@ -161,7 +181,8 @@ contract('IdentityManager', function(accounts) {
     assert.equal((await counter.get()).toString(), '1')
 
     // execute counter, signed
-    let nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
+    let nonceKey = web3.utils.soliditySha3(counter.address, 0, encodedCall)
+    let nonce = Number(await identityManager.getNonce(nonceKey))
     let signature = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
@@ -178,7 +199,8 @@ contract('IdentityManager', function(accounts) {
     }
 
     // execute counter, signed should fail
-    nonce = Number(await identityManager.getNonce(counter.address, 0, encodedCall))
+    nonceKey = web3.utils.soliditySha3(counter.address, 0, encodedCall)
+    nonce = Number(await identityManager.getNonce(nonceKey))
     assert.equal(nonce, 1)
     try {
       signature = await sign([identityManager.address, counter.address, 0, encodedCall, nonce], accounts[1])

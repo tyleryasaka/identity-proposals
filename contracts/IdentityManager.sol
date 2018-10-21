@@ -14,7 +14,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     uint256 constant MANAGEMENT_SIGS = 1;
     uint256 constant ACTION_SIGS = 1;
 
-    uint256 constant SIGNATURE_LENGTH = 65;
+    bytes constant PREFIX = "\x19Ethereum Signed Message:\n32";
 
     mapping(address => uint256) private _roles;
     mapping(bytes32 => uint256) private _nonce;
@@ -53,7 +53,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
           v := and(mload(add(signature, 65)), 255)
         }
         if (v < 27) v += 27;
-        address recovered = ecrecover(signatureData, v, r, s);
+        address recovered = ecrecover(keccak256(PREFIX, signatureData), v, r, s);
         require(_hasRole(recovered, level), "Must have appropriate role");
         return true;
     }
@@ -71,7 +71,25 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         emit RoleAdded(actor, level);
     }
 
+    function addRoleSigned(address actor, uint256 level, bytes signatures) external {
+        bytes32 nonceKey = keccak256(actor, level);
+        bytes32 signatureData = keccak256(address(this), actor, level, _nonce[nonceKey]);
+        _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
+        _nonce[nonceKey]++;
+        _roles[actor] = level;
+        emit RoleAdded(actor, level);
+    }
+
     function removeRole(address actor) external onlyManagement {
+        _roles[actor] = EMPTY_ROLE;
+        emit RoleRemoved(actor);
+    }
+
+    function removeRoleSigned(address actor, bytes signatures) external {
+        bytes32 nonceKey = keccak256(actor);
+        bytes32 signatureData = keccak256(address(this), actor, _nonce[nonceKey]);
+        _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
+        _nonce[nonceKey]++;
         _roles[actor] = EMPTY_ROLE;
         emit RoleRemoved(actor);
     }
@@ -81,18 +99,15 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function executeSigned(address to, uint256 value, bytes executionData, bytes signatures) external {
-        bytes32 callHash = keccak256(to, value, executionData);
-        bytes32 signatureData = keccak256(address(this), to, value, executionData, _nonce[callHash]);
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedData = keccak256(prefix, signatureData);
-        _checkSignature(ACTION_ROLE, signatures, prefixedData);
-        _nonce[callHash]++;
+        bytes32 nonceKey = keccak256(to, value, executionData);
+        bytes32 signatureData = keccak256(address(this), to, value, executionData, _nonce[nonceKey]);
+        _checkSignature(ACTION_ROLE, signatures, signatureData);
+        _nonce[nonceKey]++;
         _identity.execute(to, value, executionData);
     }
 
-    function getNonce(address to, uint256 value, bytes executionData) external view returns (uint256) {
-        bytes32 callHash = keccak256(to, value, executionData);
-        return _nonce[callHash];
+    function getNonce(bytes32 nonceKey) external view returns (uint256) {
+        return _nonce[nonceKey];
     }
 
     function requiredSignatures(uint256 level) external view returns (uint) {
