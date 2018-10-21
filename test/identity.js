@@ -183,8 +183,8 @@ contract('IdentityManager', function(accounts) {
     // execute counter, signed
     let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
     let nonce = Number(await identityManager.getNonce(nonceKey))
-    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
+    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
     // remove role
@@ -203,8 +203,8 @@ contract('IdentityManager', function(accounts) {
     nonce = Number(await identityManager.getNonce(nonceKey))
     assert.equal(nonce, 1)
     try {
-      signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce], accounts[1])
-      await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
+      signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+      await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
       throw null;
     } catch (error) {
       assert.include(String(error), 'VM Exception')
@@ -224,13 +224,13 @@ contract('IdentityManager', function(accounts) {
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
-    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[2] })
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // replay attack should fail
     try {
-      await identityManager.executeSigned(counter.address, 0, encodedCall, signature, { from: accounts[3] })
+      await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[3] })
       throw null;
     } catch (error) {
       assert.include(String(error), 'VM Exception')
@@ -254,5 +254,37 @@ contract('IdentityManager', function(accounts) {
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     await identityManager.execute(counter.address, 0, encodedCall)
     assert.equal((await counter.get()).toString(), '1')
+  })
+
+  it('should enforce expiry', async function() {
+    const identity = await Identity.new(accounts[0])
+    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const counter = await Counter.new()
+    const actionRole = 2
+    await identity.transferOwnership(identityManager.address)
+
+    // add role
+    await identityManager.addRole(accounts[1], actionRole)
+
+    // execute counter, signed
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
+    let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    let nonce = Number(await identityManager.getNonce(nonceKey))
+    let expiry = Math.floor( Date.now() / 1000 ) + 100 // seconds since epoch, plus 100
+    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+    assert.equal((await counter.get()).toString(), '1')
+
+    // with old expiry
+    nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    nonce = Number(await identityManager.getNonce(nonceKey))
+    expiry = Math.floor( Date.now() / 1000 ) - 100 // seconds since epoch, minus 100
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    try {
+      await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
   })
 })

@@ -58,6 +58,13 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         return true;
     }
 
+    function _checkExpiry(uint256 expiry) internal view returns (bool) {
+        if (expiry > 0) {
+            require(now < expiry, "Transaction must be executed before expiry");
+        }
+        return true;
+    }
+
     function hasRole(address actor, uint256 level) external view returns(bool) {
         return _hasRole(actor, level);
     }
@@ -98,9 +105,10 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         _identity.execute(to, value, data);
     }
 
-    function executeSigned(address to, uint256 value, bytes data, bytes signatures) external {
+    function executeSigned(address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external {
         bytes32 nonceKey = keccak256("executeSigned", to, value, data);
-        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey]);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey], expiry);
+        _checkExpiry(expiry);
         _checkSignature(ACTION_ROLE, signatures, signatureData);
         _nonce[nonceKey]++;
         _identity.execute(to, value, data);
