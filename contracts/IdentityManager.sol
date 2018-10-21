@@ -110,7 +110,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         return _nonce[nonceKey];
     }
 
-    function requiredSignatures(uint256 level) external view returns (uint) {
+    function getRequiredSignatures(uint256 level) external view returns (uint) {
         return _requiredSignatures(level);
     }
 }

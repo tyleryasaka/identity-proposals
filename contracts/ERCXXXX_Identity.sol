@@ -20,5 +20,5 @@ interface ERCXXXX_IdentityManager {
     function execute(address to, uint256 value, bytes data) external;
     function executeSigned(address to, uint256 value, bytes executionData, bytes signatures) external;
     function getNonce(bytes32 nonceKey) external view returns (uint256);
-    function requiredSignatures(uint256 level) external view returns (uint);
+    function getRequiredSignatures(uint256 level) external view returns (uint);
 }
