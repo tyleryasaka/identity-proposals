@@ -43,27 +43,18 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         }
     }
 
-    function _checkSignatures(uint256 level, bytes signatures, bytes32 signatureData) internal view returns (bool) {
-        uint256 expectedLength = _requiredSignatures(level) * SIGNATURE_LENGTH;
-        for (uint i = 0; i < expectedLength; i += SIGNATURE_LENGTH) {
-            bytes memory sig = new bytes(SIGNATURE_LENGTH);
-            uint256 j = 0;
-            for (uint256 k = i; k < i + SIGNATURE_LENGTH; k++) {
-                sig[j] = signatures[k];
-                j++;
-            }
-            bytes32 r;
-            bytes32 s;
-            uint8 v;
-            assembly {
-              r := mload(add(sig, 32))
-              s := mload(add(sig, 64))
-              v := and(mload(add(sig, 65)), 255)
-            }
-            if (v < 27) v += 27;
-            address recovered = ecrecover(signatureData, v, r, s);
-            require(_hasRole(recovered, level), "Must have appropriate role");
+    function _checkSignature(uint256 level, bytes signature, bytes32 signatureData) internal view returns (bool) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly {
+          r := mload(add(signature, 32))
+          s := mload(add(signature, 64))
+          v := and(mload(add(signature, 65)), 255)
         }
+        if (v < 27) v += 27;
+        address recovered = ecrecover(signatureData, v, r, s);
+        require(_hasRole(recovered, level), "Must have appropriate role");
         return true;
     }
 
@@ -94,7 +85,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         bytes32 signatureData = keccak256(address(this), to, value, executionData, _nonce[callHash]);
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 prefixedData = keccak256(prefix, signatureData);
-        _checkSignatures(ACTION_ROLE, signatures, prefixedData);
+        _checkSignature(ACTION_ROLE, signatures, prefixedData);
         _nonce[callHash]++;
         _identity.execute(to, value, executionData);
     }
