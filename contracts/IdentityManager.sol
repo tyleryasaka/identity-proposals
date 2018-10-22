@@ -43,7 +43,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         }
     }
 
-    function _checkSignature(uint256 level, bytes signature, bytes32 signatureData) internal view returns (bool) {
+    function _validateSignatures(uint256 level, bytes signature, bytes32 signatureData) internal view returns (bool) {
         bytes32 r;
         bytes32 s;
         uint8 v;
@@ -54,8 +54,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         }
         if (v < 27) v += 27;
         address recovered = ecrecover(keccak256(PREFIX, signatureData), v, r, s);
-        require(_hasRole(recovered, level), "Must have appropriate role");
-        return true;
+        return _hasRole(recovered, level);
     }
 
     function _checkExpiry(uint256 expiry) internal view returns (bool) {
@@ -82,7 +81,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         bytes32 nonceKey = keccak256("addRoleSigned", actor, level);
         bytes32 signatureData = keccak256(address(this), "addRoleSigned", actor, level, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
-        _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
+        require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
         _roles[actor] = level;
         emit RoleAdded(actor, level);
@@ -97,7 +96,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         bytes32 nonceKey = keccak256("removeRoleSigned", actor);
         bytes32 signatureData = keccak256(address(this), "removeRoleSigned", actor, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
-        _checkSignature(MANAGEMENT_ROLE, signatures, signatureData);
+        require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
         _roles[actor] = EMPTY_ROLE;
         emit RoleRemoved(actor);
@@ -111,7 +110,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         bytes32 nonceKey = keccak256("executeSigned", to, value, data);
         bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
-        _checkSignature(ACTION_ROLE, signatures, signatureData);
+        require(_validateSignatures(ACTION_ROLE, signatures, signatureData), "Must have valid action signatures");
         _nonce[nonceKey]++;
         _identity.execute(to, value, data);
     }
