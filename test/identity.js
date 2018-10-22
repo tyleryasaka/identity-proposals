@@ -23,6 +23,15 @@ const sign = async (params, account) => {
   return await web3.eth.sign(signatureData, account)
 }
 
+const assertVMExecption = async (fn) => {
+  try {
+    await fn()
+    throw null;
+  } catch (error) {
+    assert.include(String(error), 'VM Exception')
+  }
+}
+
 contract('Identity', function(accounts) {
   it('should allow the owner to call execute', async function() {
     // Deploy contracts
@@ -195,24 +204,18 @@ contract('IdentityManager', function(accounts) {
     await identityManager.removeRole(accounts[1])
 
     // execute counter should fail
-    try {
+    await assertVMExecption(async () => {
       await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
 
     // execute counter, signed should fail
     nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
     nonce = Number(await identityManager.getNonce(nonceKey))
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
     assert.equal(nonce, 1)
-    try {
-      signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    await assertVMExecption(async () => {
       await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
   })
 
   it('should not allow replay attacks', async function() {
@@ -233,12 +236,9 @@ contract('IdentityManager', function(accounts) {
     assert.equal((await counter.get()).toString(), '1')
 
     // replay attack should fail
-    try {
+    await assertVMExecption(async () => {
       await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[3] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
   })
 
   it('should be able to be deployed with identity in one transaction', async function() {
@@ -272,12 +272,9 @@ contract('IdentityManager', function(accounts) {
     let nonce = Number(await identityManager.getNonce(nonceKey))
     let expiry = Math.floor( Date.now() / 1000 ) - 100
     let signature = await sign([identityManager.address, "addRoleSigned", accounts[1], actionRole, nonce, expiry], accounts[0])
-    try {
+    await assertVMExecption(async () => {
       await identityManager.addRoleSigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
 
     // add role, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
@@ -290,12 +287,9 @@ contract('IdentityManager', function(accounts) {
     nonce = Number(await identityManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
-    try {
+    await assertVMExecption(async () => {
       await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
 
     // execute counter, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
@@ -308,12 +302,9 @@ contract('IdentityManager', function(accounts) {
     nonce = Number(await identityManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
     signature = await sign([identityManager.address, "removeRoleSigned", accounts[1], nonce, expiry], accounts[0])
-    try {
+    await assertVMExecption(async () => {
       await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
     let hasRole = await identityManager.hasRole(accounts[1], actionRole)
     assert.equal(hasRole, true)
 
@@ -343,12 +334,9 @@ contract('MetaWallet', function(accounts) {
     assert.equal(balance, 1)
 
     // deposit should fail if transfer fails (here it exceeds approved amount)
-    try {
+    await assertVMExecption(async () => {
       await metaWallet.deposit(simpleToken.address, accounts[0], 100)
-      throw null;
-    } catch (error) {
-      assert.include(String(error), 'VM Exception')
-    }
+    })
     balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
     assert.equal(balance, 1)
   })
