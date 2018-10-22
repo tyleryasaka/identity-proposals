@@ -4,6 +4,8 @@ var IdentityManager = artifacts.require('IdentityManager')
 var IdentityRegistry = artifacts.require('IdentityRegistry')
 var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
 var IdentityFactory = artifacts.require('IdentityFactory')
+var MetaWallet = artifacts.require('MetaWallet')
+var SimpleToken = artifacts.require('SimpleToken')
 var Web3 = require('web3')
 
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -321,5 +323,33 @@ contract('IdentityManager', function(accounts) {
     await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
     hasRole = await identityManager.hasRole(accounts[1], actionRole)
     assert.equal(hasRole, false)
+  })
+})
+
+contract('MetaWallet', function(accounts) {
+  it('should be able to deposit tokens', async function() {
+    // set up
+    const metaWallet = await MetaWallet.new()
+    const simpleToken = await SimpleToken.new()
+    await simpleToken.approve(metaWallet.address, 10)
+
+    // initial balance should be 0
+    let balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
+    assert.equal(balance, 0)
+
+    // deposit and check new balance
+    await metaWallet.deposit(simpleToken.address, accounts[0], 1)
+    balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
+    assert.equal(balance, 1)
+
+    // deposit should fail if transfer fails (here it exceeds approved amount)
+    try {
+      await metaWallet.deposit(simpleToken.address, accounts[0], 100)
+      throw null;
+    } catch (error) {
+      assert.include(String(error), 'VM Exception')
+    }
+    balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
+    assert.equal(balance, 1)
   })
 })
