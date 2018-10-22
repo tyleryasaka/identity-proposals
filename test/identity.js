@@ -318,26 +318,59 @@ contract('IdentityManager', function(accounts) {
 })
 
 contract('MetaWallet', function(accounts) {
-  it('should be able to deposit tokens', async function() {
+  it('should be able to deposit and withdraw tokens', async function() {
     // set up
     const metaWallet = await MetaWallet.new()
     const simpleToken = await SimpleToken.new()
-    await simpleToken.approve(metaWallet.address, 10)
+    await simpleToken.transfer(accounts[1], 10)
+    await simpleToken.approve(metaWallet.address, 10, { from: accounts[1] })
 
-    // initial balance should be 0
-    let balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
-    assert.equal(balance, 0)
+    // check initial balances
+    let balanceInMetaWallet = Number(await metaWallet.balanceOf(simpleToken.address, accounts[1]))
+    let balance = Number(await simpleToken.balanceOf(accounts[1]))
+    let metaWalletTotal = Number(await simpleToken.balanceOf(metaWallet.address))
+    assert.equal(balanceInMetaWallet, 0)
+    assert.equal(balance, 10)
+    assert.equal(metaWalletTotal, 0)
 
-    // deposit and check new balance
-    await metaWallet.deposit(simpleToken.address, accounts[0], 1)
-    balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
-    assert.equal(balance, 1)
+    // deposit and check new balances
+    await metaWallet.deposit(simpleToken.address, accounts[1], 4, { from: accounts[1] })
+    balanceInMetaWallet = Number(await metaWallet.balanceOf(simpleToken.address, accounts[1]))
+    balance = Number(await simpleToken.balanceOf(accounts[1]))
+    metaWalletTotal = Number(await simpleToken.balanceOf(metaWallet.address))
+    assert.equal(balanceInMetaWallet, 4)
+    assert.equal(balance, 6)
+    assert.equal(metaWalletTotal, 4)
 
-    // deposit should fail if transfer fails (here it exceeds approved amount)
+    // balance should not change if deposit fails
     await assertVMExecption(async () => {
-      await metaWallet.deposit(simpleToken.address, accounts[0], 100)
+      await metaWallet.deposit(simpleToken.address, accounts[1], 100, { from: accounts[1] })
     })
-    balance = Number(await metaWallet.balanceOf(simpleToken.address, accounts[0]))
-    assert.equal(balance, 1)
+    balanceInMetaWallet = Number(await metaWallet.balanceOf(simpleToken.address, accounts[1]))
+    balance = Number(await simpleToken.balanceOf(accounts[1]))
+    metaWalletTotal = Number(await simpleToken.balanceOf(metaWallet.address))
+    assert.equal(balanceInMetaWallet, 4)
+    assert.equal(balance, 6)
+    assert.equal(metaWalletTotal, 4)
+
+    // withdraw and check new balances
+    await metaWallet.withdraw(simpleToken.address, accounts[1], 3, { from: accounts[1] })
+    balanceInMetaWallet = Number(await metaWallet.balanceOf(simpleToken.address, accounts[1]))
+    balance = Number(await simpleToken.balanceOf(accounts[1]))
+    metaWalletTotal = Number(await simpleToken.balanceOf(metaWallet.address))
+    assert.equal(balanceInMetaWallet, 1)
+    assert.equal(balance, 9)
+    assert.equal(metaWalletTotal, 1)
+
+    // balance should not change if withdraw fails
+    await assertVMExecption(async () => {
+      await metaWallet.withdraw(simpleToken.address, accounts[1], 123, { from: accounts[1] })
+    })
+    balanceInMetaWallet = Number(await metaWallet.balanceOf(simpleToken.address, accounts[1]))
+    balance = Number(await simpleToken.balanceOf(accounts[1]))
+    metaWalletTotal = Number(await simpleToken.balanceOf(metaWallet.address))
+    assert.equal(balanceInMetaWallet, 1)
+    assert.equal(balance, 9)
+    assert.equal(metaWalletTotal, 1)
   })
 })

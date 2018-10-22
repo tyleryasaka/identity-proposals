@@ -17,7 +17,13 @@ contract MetaWallet is ERCXXXX_MetaWallet {
         emit Deposited(msg.sender, token, to, value);
     }
 
-    function withdraw(address token, address to, uint256 value) external {}
+    function withdraw(address token, address to, uint256 value) external {
+        require(_balances[token][msg.sender] >= value);
+        ERC20 erc20 = ERC20(token);
+        _balances[token][msg.sender] = _balances[token][msg.sender] - value;
+        require(erc20.transfer(to, value));
+        emit Withdrew(msg.sender, token, to, value);
+    }
 
     function execute(address to, uint256 value, bytes data, uint256 expiry, address gasToken, uint256 gasPrice, uint256 gasLimit) external {}
 }
