@@ -35,6 +35,7 @@ The existing standards around identity, claims, and universal login (that I am a
 - [ERC1056](https://github.com/ethereum/EIPs/issues/1056)
 - [ERC1077](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1077.md)
 - [ERC1078](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1078.md)
+- [ERC1484](https://github.com/ethereum/EIPs/issues/1495)
 
 ### ERC725 Concerns
 
