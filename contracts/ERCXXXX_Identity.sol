@@ -22,14 +22,3 @@ interface ERCXXXX_IdentityManager {
     function getNonce(bytes32 nonceKey) external view returns (uint256);
     function getRequiredSignatures(uint256 level) external view returns (uint);
 }
-
-interface ERCXXXX_MetaWallet {
-    event Deposited(address by, address token, address to, uint256 value);
-    event Withdrew(address by, address token, address to, uint256 value);
-    event Executed(address by, address to, uint256 value, bytes data, uint256 expiry, address gasToken, uint256 gasPrice, uint256 gasLimit);
-
-    function balanceOf(address token, address tokenOwner) external view returns(uint256);
-    function deposit(address token, address to, uint256 value) external;
-    function withdraw(address token, address to, uint256 value) external;
-    function execute(address to, uint256 value, bytes data, uint256 expiry, address gasToken, uint256 gasPrice, uint256 gasLimit) external;
-}

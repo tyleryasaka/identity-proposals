@@ -96,14 +96,23 @@ contract('Identity', function(accounts) {
   })
 
   describe('gas cost comparison', async function() {
-    let identity, identityWithManager, counter, identityManager
+    let identity, identityWithManager, counter, identityManager, metaWallet, simpleToken
 
     beforeEach(async function() {
       identity = await Identity.new(accounts[0])
       identityWithManager = await Identity.new(accounts[0])
+      metaWallet = await MetaWallet.new()
       counter = await Counter.new()
       identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
+      await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
       await identityWithManager.transferOwnership(identityManager.address)
+
+      simpleToken = await SimpleToken.new()
+      await simpleToken.transfer(accounts[1], 10)
+      await simpleToken.approve(metaWallet.address, 10, { from: accounts[1] })
+      await metaWallet.deposit(simpleToken.address, identityManager.address, 10, { from: accounts[1] })
+      const balance = Number(await metaWallet.balanceOf(simpleToken.address, identityManager.address))
+      assert.equal(balance, 10)
     })
 
     it('without identity or manager', async function() {
@@ -127,6 +136,20 @@ contract('Identity', function(accounts) {
       // Call counter.increment from identity, through identity manager
       const encodedCall = getEncodedCall(web3, counter, 'increment')
       await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+
+      // Check that increment was called
+      assert.equal((await counter.get()).toString(), '1')
+    })
+
+    it('with identity and manager and meta wallet', async function() {
+      // Call counter.increment from identity, through identity manager, through meta wallet
+      // yes, this is getting really meta
+      const encodedCall = getEncodedCall(web3, counter, 'increment')
+      const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, identityManager.address)
+      const nonce = Number(await metaWallet.getNonce(nonceKey))
+      const expiry = Math.floor( Date.now() / 1000 ) + 100
+      const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, identityManager.address, simpleToken.address, 1, nonce], accounts[1])
+      await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, identityManager.address, simpleToken.address, 1, { from: accounts[2] })
 
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
@@ -245,9 +268,10 @@ contract('IdentityManager', function(accounts) {
     // Deploy contracts
     const counter = await Counter.new()
     const identityFactory = await IdentityFactory.new()
+    const metaWallet = await MetaWallet.new()
 
     // Create identity and manager with factory
-    const result = await identityFactory.createIdentityWithManager()
+    const result = await identityFactory.createIdentityWithManager(metaWallet.address)
     assert.equal(result.logs.length, 1)
     const { identity, manager } = result.logs[0].args
     assert.ok(identity)
@@ -372,5 +396,35 @@ contract('MetaWallet', function(accounts) {
     assert.equal(balanceInMetaWallet, 1)
     assert.equal(balance, 9)
     assert.equal(metaWalletTotal, 1)
+  })
+
+  it('should be able to facilitate a sponsored execution', async function() {
+    // set up
+    const identityWithManager = await Identity.new(accounts[0])
+    const metaWallet = await MetaWallet.new()
+    const counter = await Counter.new()
+    const identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
+    await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
+    await identityWithManager.transferOwnership(identityManager.address)
+
+    const simpleToken = await SimpleToken.new()
+    await simpleToken.transfer(accounts[1], 10)
+    await simpleToken.approve(metaWallet.address, 10, { from: accounts[1] })
+    await metaWallet.deposit(simpleToken.address, identityManager.address, 10, { from: accounts[1] })
+
+    // Facilitate a sponsored execution
+    // The identity manager will sign a message giving permission for the wallet to transfer 3 tokens in exchange for executing the call.
+    const encodedCall = getEncodedCall(web3, counter, 'increment')
+    const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, identityManager.address)
+    const nonce = Number(await metaWallet.getNonce(nonceKey))
+    const expiry = Math.floor( Date.now() / 1000 ) + 100
+    const tokensToTransfer = 3
+    const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, identityManager.address, simpleToken.address, tokensToTransfer, nonce], accounts[1])
+    await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, identityManager.address, simpleToken.address, tokensToTransfer, { from: accounts[2] })
+
+    // Check that increment was called and tokens have been transferred
+    assert.equal((await counter.get()).toString(), '1')
+    const balance = Number(await simpleToken.balanceOf(accounts[2]))
+    assert.equal(balance, tokensToTransfer)
   })
 })
