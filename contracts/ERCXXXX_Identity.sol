@@ -1,8 +1,6 @@
 pragma solidity ^0.4.24;
 
 interface ERCXXXX_Identity {
-    event Executed(address to, uint256 value, bytes data);
-
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
     function execute(address to, uint256 value, bytes data) external;

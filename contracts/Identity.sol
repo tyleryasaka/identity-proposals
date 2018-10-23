@@ -2,9 +2,9 @@ pragma solidity ^0.4.24;
 
 import "./ERCXXXX_Identity.sol";
 
-/* TODO: implement ERC165 */
-
 contract Identity is ERCXXXX_Identity {
+    event Executed(address to, uint256 value, bytes data);
+
     address private _owner;
 
     constructor(address owner) public {
