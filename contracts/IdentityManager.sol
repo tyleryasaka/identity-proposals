@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 import "./ERCXXXX_Identity.sol";
 
@@ -102,17 +103,17 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         emit RoleRemoved(actor);
     }
 
-    function execute(address to, uint256 value, bytes data) external onlyAction {
-        _identity.execute(to, value, data);
+    function execute(ERCXXXX_Identity.Transaction memory tx) public onlyAction {
+        _identity.execute(tx);
     }
 
-    function executeSigned(address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external {
-        bytes32 nonceKey = keccak256("executeSigned", to, value, data);
-        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey], expiry);
+    function executeSigned(ERCXXXX_Identity.Transaction memory tx, uint256 expiry, bytes signatures) public {
+        bytes32 nonceKey = keccak256("executeSigned", tx.to, tx.value, tx.data);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", tx.to, tx.value, tx.data, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
         require(_validateSignatures(ACTION_ROLE, signatures, signatureData), "Must have valid action signatures");
         _nonce[nonceKey]++;
-        _identity.execute(to, value, data);
+        _identity.execute(tx);
     }
 
     function getNonce(bytes32 nonceKey) external view returns (uint256) {

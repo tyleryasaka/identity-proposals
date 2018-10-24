@@ -1,12 +1,19 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
-interface ERCXXXX_Identity {
+contract ERCXXXX_Identity {
+    struct Transaction {
+        address to;
+        uint256 value;
+        bytes data;
+    }
+
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
-    function execute(address to, uint256 value, bytes data) external;
+    function execute(Transaction memory tx) public;
 }
 
-interface ERCXXXX_IdentityManager {
+contract ERCXXXX_IdentityManager {
     event RoleAdded(address actor, uint256 level);
     event RoleRemoved(address actor);
 
@@ -15,8 +22,8 @@ interface ERCXXXX_IdentityManager {
     function addRoleSigned(address actor, uint256 level, uint256 expiry, bytes signatures) external;
     function removeRole(address actor) external;
     function removeRoleSigned(address actor, uint256 expiry, bytes signatures) external;
-    function execute(address to, uint256 value, bytes data) external;
-    function executeSigned(address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external;
+    function execute(ERCXXXX_Identity.Transaction memory tx) public;
+    function executeSigned(ERCXXXX_Identity.Transaction memory tx, uint256 expiry, bytes signatures) public;
     function getNonce(bytes32 nonceKey) external view returns (uint256);
     function getRequiredSignatures(uint256 level) external view returns (uint);
 }

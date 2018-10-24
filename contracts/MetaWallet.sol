@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 import "./ERCXXXX_Identity.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
@@ -48,15 +49,15 @@ contract MetaWallet {
         require(erc20.transfer(to, value));
     }
 
-    function execute(address to, uint256 value, bytes data, uint256 expiry, bytes signatures, address identityManager, address token, uint256 tokenTransfer) external {
+    function execute(ERCXXXX_Identity.Transaction memory tx, uint256 expiry, bytes signatures, address identityManager, address token, uint256 tokenTransfer) public {
         ERC20 erc20 = ERC20(token);
-        bytes32 nonceKey = keccak256("execute", to, value, data, identityManager);
-        bytes32 signatureData = keccak256(address(this), "execute", to, value, data, expiry, identityManager, token, tokenTransfer, _nonce[nonceKey]);
+        bytes32 nonceKey = keccak256("execute", tx.to, tx.value, tx.data, identityManager);
+        bytes32 signatureData = keccak256(address(this), "execute", tx.to, tx.value, tx.data, expiry, identityManager, token, tokenTransfer, _nonce[nonceKey]);
         _checkExpiry(expiry);
         require(_validateSignatures(identityManager, 2, signatures, signatureData), "Must have valid action signatures");
         ERCXXXX_IdentityManager _identityManager = ERCXXXX_IdentityManager(identityManager);
         _nonce[nonceKey]++;
-        _identityManager.execute(to, value, data);
+        _identityManager.execute(tx);
         require(_balances[token][identityManager] >= tokenTransfer);
         _balances[token][identityManager] = _balances[token][identityManager] - tokenTransfer;
         _balances[token][msg.sender] = _balances[token][msg.sender] + tokenTransfer;

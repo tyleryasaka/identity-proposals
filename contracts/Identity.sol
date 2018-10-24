@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 import "./ERCXXXX_Identity.sol";
 
@@ -25,9 +26,9 @@ contract Identity is ERCXXXX_Identity {
         _owner = newOwner;
     }
 
-    function execute(address to, uint256 value, bytes data) external onlyOwner {
-        require(executeCall(to, value, data));
-        emit Executed(to, value, data);
+    function execute(Transaction memory tx) public onlyOwner {
+        require(executeCall(tx.to, tx.value, tx.data));
+        /* emit Executed(to, value, data); */
     }
 
     // Copied from uPort's Proxy, which copied from GnosisSafe
