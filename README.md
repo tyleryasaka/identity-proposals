@@ -124,6 +124,10 @@ There is a global `ClaimIssuerRegistry` contract, which simply allows a `ClaimMa
 
 The `getClaim` method on the `ClaimIssuerRegistry` contract MUST be implemented as follows: if the given `issuer` does not have an associated `ClaimManager` contract, ERC780's `getClaim` method should be called with the given arguments. If there is an associated `ClaimManager` contract, then the `getClaim` method on that contract should be called, passing in the given `subject` and `key`.
 
+## Additional exploration: "Meta Wallet"
+
+I've also started exploring here the concept of a meta wallet to facilitate an exchange of tokens for a meta transaction execution. ERC1077 requires trusting the identity contract to faithfully send the tokens to the executor. The meta wallet removes the need for trust; as long as everyone trusts the meta wallet (which can be carefully audited by all), then the meta transaction executor does not need to trust the identity to send the tokens. See the tests for a demonstration of how this could work.
+
 ## This Codebase
 
 There are a lot of contracts here. Some of them are definitions/implementations of existing standards; others are implementations of the standards I have defined here.
