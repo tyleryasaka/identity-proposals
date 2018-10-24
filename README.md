@@ -126,7 +126,7 @@ The `getClaim` method on the `ClaimIssuerRegistry` contract MUST be implemented 
 
 ## Additional exploration: "Meta Wallet"
 
-I've also started exploring here the concept of a meta wallet to facilitate an exchange of tokens for a meta transaction execution. ERC1077 requires trusting the identity contract to faithfully send the tokens to the executor. The meta wallet removes the need for trust; as long as everyone trusts the meta wallet (which can be carefully audited by all), then the meta transaction executor does not need to trust the identity to send the tokens. See the tests for a demonstration of how this could work.
+I've also started exploring here the concept of a meta wallet to facilitate an exchange of tokens for a meta transaction execution. ERC1077 requires trusting the identity contract to faithfully send the tokens to the executor. The meta wallet removes the need for trust; as long as everyone trusts the meta wallet (which can be carefully audited by all), then the meta transaction executor does not need to trust the identity to send the tokens. See the tests for a [demonstration of how this could work](https://github.com/tyleryasaka/identity-proposals/blob/master/test/identity.js#L401).
 
 ## This Codebase
 
