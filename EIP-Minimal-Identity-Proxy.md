@@ -47,6 +47,13 @@ Executes an action on other contracts or a transfer of ether. MUST only be calle
 function execute(address to, uint256 value, bytes data, uint256 operationType) external;
 ```
 
+The `operationType` should represent the assembly operation as follows:
+- `0` for `call`
+- `1` for `delegatecall`
+- `2` for `create`
+
+Others may be added in the future. Inspired by [ERC1077](https://eips.ethereum.org/EIPS/eip-1077) and [Gnosis](https://github.com/gnosis/safe-contracts/blob/master/contracts/Enum.sol#L7)
+
 ## Rationale
 A lot of work has already been done around identity, and the goal here is not to reinvent the wheel. Rather, it is intended to be a progression of existing work. The identity proxy contract is far from an original concept. The purpose of standardizing it here is to formally define a minimum interface to encourage all projects that implement identity proxies to be interoperable.
 
