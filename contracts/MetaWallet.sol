@@ -56,7 +56,7 @@ contract MetaWallet {
         require(_validateSignatures(identityManager, 2, signatures, signatureData), "Must have valid action signatures");
         ERCXXXX_IdentityManager _identityManager = ERCXXXX_IdentityManager(identityManager);
         _nonce[nonceKey]++;
-        _identityManager.execute(to, value, data);
+        _identityManager.execute(to, value, data, 0);
         require(_balances[token][identityManager] >= tokenTransfer);
         _balances[token][identityManager] = _balances[token][identityManager] - tokenTransfer;
         _balances[token][msg.sender] = _balances[token][msg.sender] + tokenTransfer;

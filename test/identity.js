@@ -11,6 +11,7 @@ var Web3 = require('web3')
 const claimKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 const claimValue = '0x0000000000000000000000000000000000000000000000000000000000000123'
 const delegateType = '0x0000000000000000000000000000000000000000000000000000000000000abc'
+const operationCall = 0
 const web3 = new Web3(Web3.givenProvider)
 
 const getEncodedCall = (web3, instance, method, params = []) => {
@@ -44,7 +45,7 @@ contract('Identity', function(accounts) {
 
     // Call counter.increment from identity
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    const result = await identity.execute(counter.address, 0, encodedCall, { from: accounts[0] })
+    const result = await identity.execute(counter.address, 0, encodedCall, operationCall, { from: accounts[0] })
 
     // Check that increment was called
     assert.equal((await counter.get()).toString(), '1')
@@ -64,7 +65,7 @@ contract('Identity', function(accounts) {
 
     // Call counter.increment from identity, through identity manager
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    const result = await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+    const result = await identityManager.execute(counter.address, 0, encodedCall, operationCall, { from: accounts[1] })
 
     // Check that increment was called
     assert.equal((await counter.get()).toString(), '1')
@@ -88,7 +89,7 @@ contract('Identity', function(accounts) {
     // Call setClaim using identity
     const subject = accounts[1]
     const encodedCall = getEncodedCall(web3, claimRegistry780, 'setClaim', [subject, claimKey, claimValue])
-    const result = await identity.execute(claimRegistry780.address, 0, encodedCall)
+    const result = await identity.execute(claimRegistry780.address, 0, encodedCall, operationCall)
 
     // Check that claim was recorded
     const claim = await claimRegistry780.getClaim(identity.address, subject, claimKey)
@@ -126,7 +127,7 @@ contract('Identity', function(accounts) {
     it('with identity, without manager', async function() {
       // Call counter.increment from identity
       const encodedCall = getEncodedCall(web3, counter, 'increment')
-      await identity.execute(counter.address, 0, encodedCall)
+      await identity.execute(counter.address, 0, encodedCall, operationCall)
 
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
@@ -135,7 +136,7 @@ contract('Identity', function(accounts) {
     it('with identity and manager', async function() {
       // Call counter.increment from identity, through identity manager
       const encodedCall = getEncodedCall(web3, counter, 'increment')
-      await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+      await identityManager.execute(counter.address, 0, encodedCall, operationCall, { from: accounts[1] })
 
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
@@ -213,14 +214,14 @@ contract('IdentityManager', function(accounts) {
 
     // execute counter
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+    await identityManager.execute(counter.address, 0, encodedCall, operationCall, { from: accounts[1] })
     assert.equal((await counter.get()).toString(), '1')
 
     // execute counter, signed
     let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
     let nonce = Number(await identityManager.getNonce(nonceKey))
     let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+    await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
     // remove role
@@ -228,7 +229,7 @@ contract('IdentityManager', function(accounts) {
 
     // execute counter should fail
     await assertVMExecption(async () => {
-      await identityManager.execute(counter.address, 0, encodedCall, { from: accounts[1] })
+      await identityManager.execute(counter.address, 0, encodedCall, operationCall, { from: accounts[1] })
     })
 
     // execute counter, signed should fail
@@ -237,7 +238,7 @@ contract('IdentityManager', function(accounts) {
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
     assert.equal(nonce, 1)
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+      await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
     })
   })
 
@@ -255,12 +256,12 @@ contract('IdentityManager', function(accounts) {
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+    await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // replay attack should fail
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(counter.address, 0, encodedCall, 0, signature, { from: accounts[3] })
+      await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[3] })
     })
   })
 
@@ -280,7 +281,7 @@ contract('IdentityManager', function(accounts) {
     // Test new contracts
     const identityManager = IdentityManager.at(manager)
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    await identityManager.execute(counter.address, 0, encodedCall)
+    await identityManager.execute(counter.address, 0, encodedCall, operationCall)
     assert.equal((await counter.get()).toString(), '1')
   })
 
@@ -312,13 +313,13 @@ contract('IdentityManager', function(accounts) {
     expiry = Math.floor( Date.now() / 1000 ) - 100
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+      await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, expiry, signature, { from: accounts[2] })
     })
 
     // execute counter, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
     signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
-    await identityManager.executeSigned(counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+    await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, expiry, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // remove role, signed with invalid expiry
