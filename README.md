@@ -67,11 +67,9 @@ Just learning more about this. I feel that it may have too many params for the `
 
 ```
 interface ERCXXXX_Identity {
-    event Executed(address to, uint256 value, bytes data);
-
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
-    function execute(address to, uint256 value, bytes data) external;
+    function execute(address to, uint256 value, bytes data, uint256 operationType) external;
 }
 
 interface ERCXXXX_IdentityManager {
@@ -83,8 +81,8 @@ interface ERCXXXX_IdentityManager {
     function addRoleSigned(address actor, uint256 level, uint256 expiry, bytes signatures) external;
     function removeRole(address actor) external;
     function removeRoleSigned(address actor, uint256 expiry, bytes signatures) external;
-    function execute(address to, uint256 value, bytes data) external;
-    function executeSigned(address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external;
+    function execute(address to, uint256 value, bytes data, uint256 operationType) external;
+    function executeSigned(address to, uint256 value, bytes data, uint256 operationType, uint256 expiry, bytes signatures) external;
     function getNonce(bytes32 nonceKey) external view returns (uint256);
     function getRequiredSignatures(uint256 level) external view returns (uint);
 }
