@@ -218,9 +218,9 @@ contract('IdentityManager', function(accounts) {
     assert.equal((await counter.get()).toString(), '1')
 
     // execute counter, signed
-    let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    let nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall, operationCall)
     let nonce = Number(await identityManager.getNonce(nonceKey))
-    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    let signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, operationCall, nonce, 0], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
@@ -233,9 +233,9 @@ contract('IdentityManager', function(accounts) {
     })
 
     // execute counter, signed should fail
-    nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall, operationCall)
     nonce = Number(await identityManager.getNonce(nonceKey))
-    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, operationCall, nonce, 0], accounts[1])
     assert.equal(nonce, 1)
     await assertVMExecption(async () => {
       await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
@@ -255,7 +255,7 @@ contract('IdentityManager', function(accounts) {
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
-    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, operationCall, nonce, 0], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
@@ -308,17 +308,17 @@ contract('IdentityManager', function(accounts) {
 
     // execute counter, signed with invalid expiry
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall)
+    nonceKey = web3.utils.soliditySha3("executeSigned", counter.address, 0, encodedCall, operationCall)
     nonce = Number(await identityManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
-    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, operationCall, nonce, expiry], accounts[1])
     await assertVMExecption(async () => {
       await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, expiry, signature, { from: accounts[2] })
     })
 
     // execute counter, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    signature = await sign([identityManager.address, "executeSigned", counter.address, 0, encodedCall, operationCall, nonce, expiry], accounts[1])
     await identityManager.executeSigned(counter.address, 0, encodedCall, operationCall, expiry, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 

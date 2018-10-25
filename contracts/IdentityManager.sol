@@ -107,8 +107,8 @@ contract IdentityManager is ERCXXXX_IdentityManager {
     }
 
     function executeSigned(address to, uint256 value, bytes data, uint256 operationType, uint256 expiry, bytes signatures) external {
-        bytes32 nonceKey = keccak256("executeSigned", to, value, data);
-        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, _nonce[nonceKey], expiry);
+        bytes32 nonceKey = keccak256("executeSigned", to, value, data, operationType);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, operationType, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
         require(_validateSignatures(ACTION_ROLE, signatures, signatureData), "Must have valid action signatures");
         _nonce[nonceKey]++;
