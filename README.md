@@ -2,7 +2,7 @@
 
 This began as a demonstration of how [ERC725](https://github.com/ethereum/EIPs/issues/725) can be split into two separate standards, keeping a separation of concerns between identity and key management.
 
-Now, this has evolved into a full-fledged exploration of identity standards and includes some proposed standards to support **flexible, long-lasting identity management for users on Ethereum**.
+Now, this has evolved into a full-fledged exploration of identity standards with the goal of supporting **flexible, long-lasting identity management for users on Ethereum**. Everything here is currently just exploratory.
 
 ## Rationale
 
