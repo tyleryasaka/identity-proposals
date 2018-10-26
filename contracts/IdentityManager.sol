@@ -102,17 +102,17 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         emit RoleRemoved(actor);
     }
 
-    function execute(address to, uint256 value, bytes data, uint256 operationType) external onlyAction {
-        _identity.execute(to, value, data, operationType);
+    function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyAction {
+        _identity.execute(operationType, to, value, data);
     }
 
-    function executeSigned(address to, uint256 value, bytes data, uint256 operationType, uint256 expiry, bytes signatures) external {
-        bytes32 nonceKey = keccak256("executeSigned", to, value, data, operationType);
-        bytes32 signatureData = keccak256(address(this), "executeSigned", to, value, data, operationType, _nonce[nonceKey], expiry);
+    function executeSigned(uint256 operationType, address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external {
+        bytes32 nonceKey = keccak256("executeSigned", operationType, to, value, data);
+        bytes32 signatureData = keccak256(address(this), "executeSigned", operationType, to, value, data, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
         require(_validateSignatures(ACTION_ROLE, signatures, signatureData), "Must have valid action signatures");
         _nonce[nonceKey]++;
-        _identity.execute(to, value, data, operationType);
+        _identity.execute(operationType, to, value, data);
     }
 
     function getNonce(bytes32 nonceKey) external view returns (uint256) {

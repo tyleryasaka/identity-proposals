@@ -8,6 +8,7 @@ contract MetaWallet {
     mapping(bytes32 => uint256) private _nonce;
 
     bytes constant PREFIX = "\x19Ethereum Signed Message:\n32";
+    uint256 constant OPERATION_CALL = 0;
 
     function _checkExpiry(uint256 expiry) internal view returns (bool) {
         if (expiry > 0) {
@@ -49,18 +50,17 @@ contract MetaWallet {
     }
 
     function execute(address to, uint256 value, bytes data, uint256 expiry, bytes signatures, address identityManager, address token, uint256 tokenTransfer) external {
-        ERC20 erc20 = ERC20(token);
         bytes32 nonceKey = keccak256("execute", to, value, data, identityManager);
         bytes32 signatureData = keccak256(address(this), "execute", to, value, data, expiry, identityManager, token, tokenTransfer, _nonce[nonceKey]);
         _checkExpiry(expiry);
         require(_validateSignatures(identityManager, 2, signatures, signatureData), "Must have valid action signatures");
         ERCXXXX_IdentityManager _identityManager = ERCXXXX_IdentityManager(identityManager);
         _nonce[nonceKey]++;
-        _identityManager.execute(to, value, data, 0);
+        _identityManager.execute(OPERATION_CALL, to, value, data);
         require(_balances[token][identityManager] >= tokenTransfer);
         _balances[token][identityManager] = _balances[token][identityManager] - tokenTransfer;
         _balances[token][msg.sender] = _balances[token][msg.sender] + tokenTransfer;
-        require(erc20.transfer(msg.sender, tokenTransfer));
+        require(ERC20(token).transfer(msg.sender, tokenTransfer));
     }
 
     function getNonce(bytes32 nonceKey) external view returns (uint256) {

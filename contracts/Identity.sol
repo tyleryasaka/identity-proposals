@@ -29,7 +29,7 @@ contract Identity is ERCXXXX_Identity {
         _owner = newOwner;
     }
 
-    function execute(address to, uint256 value, bytes data, uint256 operationType) external onlyOwner {
+    function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyOwner {
         if (operationType == OPERATION_CALL)
             executeCall(to, value, data);
         else if (operationType == OPERATION_DELEGATECALL)
