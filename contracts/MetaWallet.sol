@@ -9,6 +9,7 @@ contract MetaWallet {
 
     bytes constant PREFIX = "\x19Ethereum Signed Message:\n32";
     uint256 constant OPERATION_CALL = 0;
+    uint256 constant ACTION_ROLE = 2;
 
     function _checkExpiry(uint256 expiry) internal view returns (bool) {
         if (expiry > 0) {
@@ -53,13 +54,13 @@ contract MetaWallet {
         bytes32 nonceKey = keccak256("execute", to, value, data, identityManager);
         bytes32 signatureData = keccak256(address(this), "execute", to, value, data, expiry, identityManager, token, tokenTransfer, _nonce[nonceKey]);
         _checkExpiry(expiry);
-        require(_validateSignatures(identityManager, 2, signatures, signatureData), "Must have valid action signatures");
+        require(_validateSignatures(identityManager, ACTION_ROLE, signatures, signatureData));
         ERCXXXX_IdentityManager _identityManager = ERCXXXX_IdentityManager(identityManager);
         _nonce[nonceKey]++;
         _identityManager.execute(OPERATION_CALL, to, value, data);
         require(_balances[token][identityManager] >= tokenTransfer);
-        _balances[token][identityManager] = _balances[token][identityManager] - tokenTransfer;
-        _balances[token][msg.sender] = _balances[token][msg.sender] + tokenTransfer;
+        _balances[token][identityManager] -= tokenTransfer;
+        _balances[token][msg.sender] += tokenTransfer;
         require(ERC20(token).transfer(msg.sender, tokenTransfer));
     }
 
