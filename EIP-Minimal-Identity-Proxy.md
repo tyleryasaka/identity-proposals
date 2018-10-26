@@ -44,7 +44,7 @@ function transferOwnership(address newOwner) external;
 Executes an action on other contracts or a transfer of ether. MUST only be called by the current owner of the contract. Matches the signature of the corresponding method in [ERC725](https://github.com/ethereum/EIPs/issues/725) as closely as possible.
 
 ```
-function execute(address to, uint256 value, bytes data, uint256 operationType) external;
+function execute(uint256 operationType, address to, uint256 value, bytes data) external;
 ```
 
 The `operationType` should represent the assembly operation as follows:
@@ -81,7 +81,7 @@ pragma solidity ^0.4.24;
 interface ERCXXXX {
     function owner() external view returns(address);
     function transferOwnership(address newOwner) external;
-    function execute(address to, uint256 value, bytes data, uint256 operationType) external;
+    function execute(uint256 operationType, address to, uint256 value, bytes data) external;
 }
 ```
 
