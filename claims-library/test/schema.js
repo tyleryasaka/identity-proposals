@@ -27,7 +27,6 @@ describe('schema', function() {
   })
 
   it('should not be valid without the "Credential" type', function() {
-    // https://www.w3.org/TR/verifiable-claims-data-model/#x4.1.2-expressing-an-entity-credential-in-json
     assertInvalid({
       id: 'http://example.gov/credentials/3732',
       type: ['ProofOfAgeCredential'],
@@ -41,7 +40,6 @@ describe('schema', function() {
   })
 
   it('should not be valid without all required fields', function() {
-    // https://www.w3.org/TR/verifiable-claims-data-model/#x4.1.2-expressing-an-entity-credential-in-json
     assertInvalid({
       id: 'http://example.gov/credentials/3732',
       type: ['Credential', 'ProofOfAgeCredential'],
