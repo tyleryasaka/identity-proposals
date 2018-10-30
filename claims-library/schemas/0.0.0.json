@@ -8,14 +8,30 @@
     "id": {
       "type": "string"
     },
-    "type": {},
+    "type": {
+      "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "contains": {
+          "const": "Credential"
+        }
+    },
     "issuer": {
       "type": "string"
     },
     "issued": {
       "type": "string"
     },
-    "claim": {}
+    "claim": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [ "id" ]
+    }
   },
-  "required": [ "id", "type", "issuer", "issued", "claim" ]
+  "required": [ "id", "type", "claim", "issuer", "issued" ]
 }
