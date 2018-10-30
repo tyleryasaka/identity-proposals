@@ -18,5 +18,8 @@
   "homepage": "https://github.com/tyleryasaka/identity-proposals#readme",
   "devDependencies": {
     "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "ajv": "^6.5.4"
   }
 }
