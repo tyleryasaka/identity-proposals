@@ -26,6 +26,8 @@ This library is an "abstract" javascript class. (Abstract classes don't currentl
 
 ### Unimplemented methods
 
+Implementations (inherited classes) should define these methods.
+
 #### getClaims
 - input:
   - `id`: `id` of subject (string)
