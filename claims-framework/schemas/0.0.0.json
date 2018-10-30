@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/tyleryasaka/identity-proposals/claims-framework/schemas/0.0.0.json",
+  "title": "VerifiableClaim",
+  "description": "A claim that conforms to W3C Verifiable Claims",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {},
+    "issuer": {
+      "type": "string"
+    },
+    "issued": {
+      "type": "string"
+    },
+    "claim": {}
+  },
+  "required": [ "id", "type", "issuer", "issued", "claim" ]
+}
