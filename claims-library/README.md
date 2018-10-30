@@ -85,3 +85,11 @@ I have kicked things off with `0`: `spirit animal`.
 | Type | Name | Description |
 | --- | --- | --- |
 | 0 | spirit animal | this should be a self-claim, the value of which should be the identity's self-proclaimed spirit animal |
+
+### Implementations
+
+Anyone that builds an implementation on top of this library is welcome to make a PR to update this table.
+
+| Implementation | Name | Url |
+| --- | --- | --- |
+| | | |
