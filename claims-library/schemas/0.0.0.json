@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/tyleryasaka/identity-proposals/claims-library/schemas/0.0.0.json",
+  "$id": "https://github.com/tyleryasaka/identity-proposals/blob/master/claims-library/schemas/0.0.0.json",
   "title": "VerifiableClaim",
   "description": "A claim that conforms to W3C Verifiable Claims",
   "type": "object",
