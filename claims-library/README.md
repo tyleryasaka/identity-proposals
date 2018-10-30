@@ -22,32 +22,37 @@ This library attempts to be as unopinionated and flexible as possible, in order 
 
 ## Library
 
-This library is a javascript class. The parameters are passed into the constructor.
+This library is an "abstract" javascript class. (Abstract classes don't currently exist in Javascript, but this class pretends to be abstract.) It cannot be used directly; rather, specific implementations should define the missing methods.
 
-### Parameters
+### Unimplemented methods
 
-#### lookup function (required)
+#### getClaims
 - input:
   - `id`: `id` of subject (string)
 - returns: array of claims (json)
 
-#### validation function
+#### isValid
 - input:
   - `claim`: claim (json)
 - returns: validity of claim (boolean)
 
 ```javascript
-function lookup(id) {
-  // ...
-  return claims
-}
+class MyImplementation extends Claimtastic {
+  constructor() {
+    super()
+    // do custom stuff
+  }
 
-function validate(claim) {
-  // ...
-  return isValid
-}
+  getClaims(id) {
+    // ...
+    return claims
+  }
 
-const myImplementation = new Claimtastic(lookup, validate)
+  validate(claim) {
+    // ...
+    return isValid
+  }
+}
 ```
 
 ### Methods
@@ -61,7 +66,7 @@ Retrieves all valid claims for a given identifier. To be considered valid, not o
 - returns: array of claims (json)
 
 ```javascript
-const myImplementation = new Claimtastic(lookup, validate)
+const myImplementation = new MyImplementation()
 
 const claims = myImplementation.getValidClaims(id)
 ```
