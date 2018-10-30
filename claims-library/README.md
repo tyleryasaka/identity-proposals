@@ -31,12 +31,12 @@ Implementations (inherited classes) should define these methods.
 #### getClaims
 - input:
   - `id`: `id` of subject (string)
-- returns: array of claims (json)
+- returns: promise -> array of claims (json)
 
 #### isValid
 - input:
   - `claim`: claim (json)
-- returns: validity of claim (boolean)
+- returns: promise -> validity of claim (boolean)
 
 ```javascript
 class MyImplementation extends Claimtastic {
@@ -45,12 +45,12 @@ class MyImplementation extends Claimtastic {
     // do custom stuff
   }
 
-  getClaims(id) {
+  async getClaims(id) {
     // ...
     return claims
   }
 
-  validate(claim) {
+  async validate(claim) {
     // ...
     return isValid
   }
@@ -65,12 +65,12 @@ Retrieves all valid claims for a given identifier. To be considered valid, not o
 
 - input:
   - `id`: `id` of subject identity (string)
-- returns: array of claims (json)
+- returns: promise -> array of claims (json)
 
 ```javascript
 const myImplementation = new MyImplementation()
 
-const claims = myImplementation.getValidClaims(id)
+const claims = await myImplementation.getValidClaims(id)
 ```
 
 ### Schema
