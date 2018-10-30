@@ -1,0 +1,19 @@
+{
+  "name": "claimtastic.js",
+  "version": "0.0.0",
+  "description": "A minimal javascript library for managing claims",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyleryasaka/identity-proposals.git"
+  },
+  "author": "Tyler Yasaka",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tyleryasaka/identity-proposals/issues"
+  },
+  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme"
+}
