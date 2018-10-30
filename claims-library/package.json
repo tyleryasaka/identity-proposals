@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/tyleryasaka/identity-proposals/issues"
   },
-  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme"
+  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme",
+  "devDependencies": {
+    "mocha": "^5.2.0"
+  }
 }
