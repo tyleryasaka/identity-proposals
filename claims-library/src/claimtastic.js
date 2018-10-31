@@ -6,25 +6,28 @@ const requiredMethods = ['isValid', 'getClaims']
 class Claimtastic {
   constructor() {
     const ajv = new Ajv()
-    this._isValidSchema = ajv.compile(schema)
+    this._isValidStructure = ajv.compile(schema)
 
     // check that methods are implemented
-    if (this.isValid === undefined) {
+    if (this._isValid === undefined) {
       throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without an "isValid" method.')
     }
-    if (this.getClaims === undefined) {
+    if (this._getClaims === undefined) {
       throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without a "getClaims" method.')
+    }
+    if (this._addClaim === undefined) {
+      throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without an "addClaim" method.')
     }
   }
 
-  isValidSchema(claim) {
-    return this._isValidSchema(claim)
+  isValidStructure(claim) {
+    return this._isValidStructure(claim)
   }
 
-  async getValidClaims(id) {
-    const claims = await this.getClaims(id)
+  async getClaims(id) {
+    const claims = await this._getClaims(id)
     const claimsValidity = await Promise.all(claims.map(async claim => {
-      return this.isValidSchema(claim) && (await this.isValid(claim))
+      return this.isValidStructure(claim) && (await this._isValid(claim))
     }))
     const validClaims = claims.filter((claim, c) => {
       return claimsValidity[c]

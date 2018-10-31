@@ -62,14 +62,18 @@ class MyImplementation extends Claimtastic {
     // do custom things
   }
 
-  async isValid(claim) {
+  async _isValid(claim) {
     // example only. not a good validation method.
     return Promise.resolve(claim.amIValid === 'yes')
   }
 
-  async getClaims(id) {
+  async _getClaims(id) {
     const claims = [invalidSchemaClaim, validClaim_1, invalidClaim, validClaim_2, validClaim_3]
     return Promise.resolve(claims.filter(claim => claim.claim.id === id))
+  }
+
+  async _addClaim(subjectId, claim) {
+    // TODO
   }
 }
 
@@ -84,10 +88,10 @@ describe('Claimtastic', function() {
     })
   })
 
-  describe('getValidClaims', function() {
+  describe('getClaims', function() {
     it('should use the isValid and getClaim methods to return valid claims', async function() {
       const myImplementation = new MyImplementation()
-      const validClaims = await myImplementation.getValidClaims(subjectId_1)
+      const validClaims = await myImplementation.getClaims(subjectId_1)
       console.log('claims', validClaims)
 
       // valid claims for id should be returned
