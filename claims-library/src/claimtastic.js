@@ -27,12 +27,20 @@ class Claimtastic {
   async getClaims(id) {
     const claims = await this._getClaims(id)
     const claimsValidity = await Promise.all(claims.map(async claim => {
-      return this.isValidStructure(claim) && (await this._isValid(claim))
+      return this._isValidStructure(claim) && (await this._isValid(claim))
     }))
     const validClaims = claims.filter((claim, c) => {
       return claimsValidity[c]
     })
     return validClaims
+  }
+
+  async addClaim(subjectId, claim) {
+    if (!this._isValidStructure(claim)) {
+      throw new Error('Error adding claim: claim structure is invalid')
+    }
+    const success = await this._addClaim(subjectId, claim)
+    return success
   }
 }
 
