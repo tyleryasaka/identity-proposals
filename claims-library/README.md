@@ -34,7 +34,7 @@ Implementations (inherited classes) should define these methods. Javascript does
 
 #### \_getClaims
 - input:
-  - `id`: `id` of subject (string)
+  - `subjectId`: `id` of subject (string)
 - returns: promise -> array of claims (json)
 
 #### \_isValid
@@ -55,7 +55,7 @@ class MyImplementation extends Claimtastic {
     // ...
   }
 
-  async _getClaims(id) {
+  async _getClaims(subjectId) {
     // ...
     return claims
   }
@@ -79,13 +79,13 @@ class MyImplementation extends Claimtastic {
 Retrieves all valid claims for a given subject identifier. To be considered valid, not only must the claim be valid as determined by the validation function; it must also conform to the JSON schema.
 
 - input:
-  - `id`: `id` of subject identity (string)
+  - `subjectId`: `id` of subject identity (string)
 - returns: promise -> array of claims (json)
 
 ```javascript
 const myImplementation = new MyImplementation()
 
-const claims = await myImplementation.getClaims(id)
+const claims = await myImplementation.getClaims(subjectId)
 ```
 
 #### getSelfClaims
@@ -93,13 +93,13 @@ const claims = await myImplementation.getClaims(id)
 Self claims are things that the identity says about itself. E.g. "This is my facebook profile" or "I'm a US citizen". A self claim is just a statement - not guaranteed to be true in any way.
 
 - input:
-  - `id`: `id` of subject identity (string)
+  - `subjectId`: `id` of subject identity (string)
 - returns: promise -> array of claims (json)
 
 ```javascript
 const myImplementation = new MyImplementation()
 
-const selfClaims = await myImplementation.getSelfClaims(id)
+const selfClaims = await myImplementation.getSelfClaims(subjectId)
 ```
 
 #### getAttestations
@@ -125,7 +125,6 @@ const attestations = await myImplementation.getAttestations(subjectId, someSelfC
 Adds a claim to an identity. Only the subject identity should be authorized to do this.
 
 - input:
-  - `subjectId`: `id` of subject identity (string)
   - `claim`: the claim object (json)
 - returns: promise -> success (boolean)
 
@@ -143,7 +142,7 @@ const claim = {
   }
 }
 
-const claimAdded = await myImplementation.addClaim(subjectId, claim)
+const claimAdded = await myImplementation.addClaim(claim)
 ```
 
 #### addSelfClaim

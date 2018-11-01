@@ -3,6 +3,14 @@ const schema = require('../schemas/0.0.0.json')
 
 const requiredMethods = ['isValid', 'getClaims']
 
+const SELF_CLAIM_TYPE = 'SelfClaim'
+const ATTESTATION_TYPE = 'Attestation'
+
+function getToday() {
+  const today = new Date()
+  return `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+}
+
 class Claimtastic {
   constructor() {
     const ajv = new Ajv()
@@ -24,8 +32,8 @@ class Claimtastic {
     return this._isValidStructure(claim)
   }
 
-  async getClaims(id) {
-    const claims = await this._getClaims(id)
+  async getClaims(subjectId) {
+    const claims = await this._getClaims(subjectId)
     const claimsValidity = await Promise.all(claims.map(async claim => {
       return this._isValidStructure(claim) && (await this._isValid(claim))
     }))
@@ -35,11 +43,52 @@ class Claimtastic {
     return validClaims
   }
 
-  async addClaim(subjectId, claim) {
-    if (!this._isValidStructure(claim)) {
-      throw new Error('Error adding claim: claim structure is invalid')
+  async getSelfClaims(subjectId) {
+    const claims = await this.getClaims(subjectId)
+    return claims.filter(claim => {
+      return claim.type.includes(SELF_CLAIM_TYPE)
+    })
+  }
+
+  async getAttestations(subjectId, claimId) {
+    const claims = await this.getClaims(subjectId)
+    return claims.filter(claim => {
+      return claim.type.includes(ATTESTATION_TYPE) && (claim.targetClaim === claimId)
+    })
+  }
+
+  async addClaim(claim) {
+    const success = await this._addClaim(claim)
+    return success
+  }
+
+  async addSelfClaim(subjectId, claimType, claimData) {
+    claimData.id = subjectId
+    const claim = {
+      type: ['Credential', 'SelfClaim', claimType],
+      issuer: subjectId,
+      issued: getToday(),
+      claim: claimData
     }
-    const success = await this._addClaim(subjectId, claim)
+    const success = await this._addClaim(claim)
+    return success
+  }
+
+  async addAttestation(subjectId, claimId, issuerId, issued, signature) {
+    const claim = {
+      type: ['Credential', 'Attestation'],
+      issuer: issuerId,
+      issued: issued,
+      claim: {
+        id: subjectId,
+        verified: true
+      },
+      targetClaim: claimId,
+      signature: {
+        signatureValue: signature
+      }
+    }
+    const success = await this._addClaim(claim)
     return success
   }
 }

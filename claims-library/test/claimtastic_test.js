@@ -33,14 +33,14 @@ const validClaim_1 = {
   },
   amIValid: 'yes'
 }
-const validClaim_2 = {
+const validSelfClaim = {
   id: 'http://example.gov/credentials/3735',
-  type: ['Credential', 'ProofOfAgeCredential'],
-  issuer: 'https://dmv.example.gov',
+  type: ['Credential', 'SelfClaim', 'SpiritAnimal'],
+  issuer: subjectId_1,
   issued: '2010-01-01',
   claim: {
     id: subjectId_1,
-    ageOver: 18
+    animal: 'northern bobwhite'
   },
   amIValid: 'yes'
 }
@@ -55,14 +55,33 @@ const validClaim_3 = {
   },
   amIValid: 'yes'
 }
-const validClaim_4 = {
-  id: 'http://example.gov/credentials/3734',
-  type: ['Credential', 'ProofOfAgeCredential'],
+const validAttestation = {
+  id: 'http://example.gov/credentials/3737',
+  type: ['Credential', 'Attestation'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
   claim: {
     id: subjectId_1,
-    isAwesome: 'heck yeah'
+    verified: true
+  },
+  targetClaim: 'http://example.gov/credentials/3735',
+  signature: {
+    signatureValue: 'abc-123'
+  },
+  amIValid: 'yes'
+}
+const otherAttestation = {
+  id: 'http://example.gov/credentials/3738',
+  type: ['Credential', 'Attestation'],
+  issuer: 'https://dmv.example.gov',
+  issued: '2010-01-01',
+  claim: {
+    id: subjectId_1,
+    verified: true
+  },
+  targetClaim: 'http://example.gov/credentials/other-id',
+  signature: {
+    signatureValue: 'abc-123'
   },
   amIValid: 'yes'
 }
@@ -70,6 +89,7 @@ const validClaim_4 = {
 class MyImplementation extends Claimtastic {
   constructor() {
     super()
+    this.addedClaims = []
     // do custom things
   }
 
@@ -79,12 +99,13 @@ class MyImplementation extends Claimtastic {
   }
 
   async _getClaims(id) {
-    const claims = [invalidStructureClaim, validClaim_1, invalidClaim, validClaim_2, validClaim_3]
+    const claims = [invalidStructureClaim, validClaim_1, invalidClaim, validSelfClaim, validClaim_3, validAttestation, otherAttestation]
     return Promise.resolve(claims.filter(claim => claim.claim.id === id))
   }
 
-  async _addClaim(subjectId, claim) {
+  async _addClaim(claim) {
     // do stuff
+    this.addedClaims.push(claim)
     const success = true
     return success
   }
@@ -108,7 +129,7 @@ describe('Claimtastic', function() {
 
       // valid claims for id should be returned
       assert.deepInclude(validClaims, validClaim_1)
-      assert.deepInclude(validClaims, validClaim_2)
+      assert.deepInclude(validClaims, validSelfClaim)
 
       // invalid schema should not be returned
       assert.notDeepInclude(validClaims, invalidStructureClaim)
@@ -121,21 +142,104 @@ describe('Claimtastic', function() {
     })
   })
 
-  describe('addClaim', function() {
-    it('should throw an error if an invalid claim object is passed', async function() {
+  describe('getSelfClaims', function() {
+    it('should return valid self claims', async function() {
       const myImplementation = new MyImplementation()
-      try {
-        await myImplementation.addClaim(subjectId_1, invalidStructureClaim)
-        throw new Error(null)
-      } catch(err) {
-        assert.equal(String(err), 'Error: Error adding claim: claim structure is invalid')
-      }
-    })
+      const selfClaims = await myImplementation.getSelfClaims(subjectId_1)
 
+      // valid claims for id should be returned
+      assert.deepInclude(selfClaims, validSelfClaim)
+
+      // non self claims should not be returned
+      assert.notDeepInclude(selfClaims, validClaim_1)
+      assert.notDeepInclude(selfClaims, invalidStructureClaim)
+      assert.notDeepInclude(selfClaims, invalidClaim)
+      assert.notDeepInclude(selfClaims, validClaim_3)
+      assert.notDeepInclude(selfClaims, validAttestation)
+    })
+  })
+
+  describe('getAttestations', function() {
+    it('should return valid attestations', async function() {
+      const myImplementation = new MyImplementation()
+      const attestations = await myImplementation.getAttestations(subjectId_1, 'http://example.gov/credentials/3735')
+
+      // valid claims for id should be returned
+      assert.deepInclude(attestations, validAttestation)
+
+      // non self claims should not be returned
+      assert.notDeepInclude(attestations, validClaim_1)
+      assert.notDeepInclude(attestations, invalidStructureClaim)
+      assert.notDeepInclude(attestations, invalidClaim)
+      assert.notDeepInclude(attestations, validClaim_3)
+      assert.notDeepInclude(attestations, validSelfClaim)
+      assert.notDeepInclude(attestations, otherAttestation)
+    })
+  })
+
+  describe('addClaim', function() {
     it('should return the result of the _addClaim method', async function() {
       const myImplementation = new MyImplementation()
-      const result = await myImplementation.addClaim(subjectId_1, validClaim_1)
+      const result = await myImplementation.addClaim(validClaim_1)
       assert.equal(result, true)
+      assert.equal(myImplementation.addedClaims.length, 1)
+      assert.deepEqual(myImplementation.addedClaims[0], validClaim_1)
+    })
+  })
+
+  describe('addSelfClaim', function() {
+    it('should construct a self claim and return the result of the _addClaim method', async function() {
+      const today = new Date()
+      const myImplementation = new MyImplementation()
+      const claimType = 'SpiritAnimal'
+      const claimData = {
+        animal: 'northern bobwhite'
+      }
+      const result = await myImplementation.addSelfClaim(subjectId_1, claimType, claimData)
+      assert.equal(result, true)
+      assert.equal(myImplementation.addedClaims.length, 1)
+      assert.deepEqual(myImplementation.addedClaims[0], {
+        type: ['Credential', 'SelfClaim', 'SpiritAnimal'],
+        issuer: subjectId_1,
+        issued: `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`,
+        claim: {
+          id: subjectId_1,
+          animal: 'northern bobwhite'
+        }
+      })
+    })
+  })
+
+  describe('addAttestation', function() {
+    it('should construct an attestation and return the result of the _addClaim method', async function() {
+      const subjectId = subjectId_1
+      const claimId = 'http://example.gov/credentials/3734'
+      const issuerId = subjectId_2
+      const issued = '1999-12-31'
+      const signature = 'abc-123'
+      const myImplementation = new MyImplementation()
+      const result = await myImplementation.addAttestation(
+        subjectId,
+        claimId,
+        issuerId,
+        issued,
+        signature
+      )
+      assert.equal(result, true)
+      assert.equal(myImplementation.addedClaims.length, 1)
+      assert.deepEqual(myImplementation.addedClaims[0], {
+        type: ['Credential', 'Attestation'],
+        issuer: issuerId,
+        issued: issued,
+        claim: {
+          id: subjectId,
+          verified: true
+        },
+        targetClaim: claimId,
+        signature: {
+          signatureValue: signature
+        }
+      })
     })
   })
 })
