@@ -1,0 +1,19 @@
+{
+  "name": "claimtastic-ethereum",
+  "version": "0.0.0",
+  "description": "an implementation of claimtastic.js on Ethereum",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyleryasaka/identity-proposals.git"
+  },
+  "author": "Tyler Yasaka",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/tyleryasaka/identity-proposals/issues"
+  },
+  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme"
+}
