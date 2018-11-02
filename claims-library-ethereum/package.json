@@ -2,8 +2,10 @@
   "name": "claimtastic-ethereum",
   "version": "0.0.0",
   "description": "an implementation of claimtastic.js on Ethereum",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
+    "start": "webpack-dev-server --open",
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -15,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/tyleryasaka/identity-proposals/issues"
   },
-  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme"
+  "homepage": "https://github.com/tyleryasaka/identity-proposals#readme",
+  "devDependencies": {
+    "webpack": "^4.24.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  }
 }
