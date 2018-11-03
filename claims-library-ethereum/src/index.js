@@ -71,13 +71,12 @@ class ClaimtasticEthereum extends Claimtastic {
     this._requireUnlocked()
     claim.id = this.web3.utils.sha3(JSON.stringify(claim))
     const claims = (await this.box.public.get('claims')) || []
-    if (!claims.map(claim => claim.id).includes(claim.id)) {
-      claims.push(claim)
-      await this.box.public.set('claims', claims)
-      return true
-    } else {
+    if (claims.map(c => c.id).includes(claim.id)) {
       throw new Error(`Claim with id ${claim.id} already exists`)
     }
+    claims.push(claim)
+    await this.box.public.set('claims', claims)
+    return true
   }
 }
 
