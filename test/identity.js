@@ -272,7 +272,7 @@ contract('IdentityManager', function(accounts) {
     const metaWallet = await MetaWallet.new()
 
     // Create identity and manager with factory
-    const result = await identityFactory.createIdentityWithManager(metaWallet.address)
+    const result = await identityFactory.createIdentityWithMetaWallet(metaWallet.address)
     assert.equal(result.logs.length, 1)
     const { identity, manager } = result.logs[0].args
     assert.ok(identity)
