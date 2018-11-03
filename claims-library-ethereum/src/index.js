@@ -5,6 +5,9 @@ const IdentityFactoryContract = require('../../build/contracts/IdentityFactory.j
 const Web3 = require('web3')
 
 const KEY_DID = 'DID'
+const KEY_IDENTITY_MANAGEMENT_SCHEME = '725-management-scheme'
+const SCHEME_WALLET = 'wallet'
+const SCHEME_CONTRACT = 'contract'
 
 // for development purposes only
 const RINKEBY_CONTRACT_ADDRESS = '0x0041c932B4EFe5c835959fA28BA2E0301d9712FA'
@@ -46,6 +49,7 @@ class ClaimtasticEthereum extends Claimtastic {
       deployment.send({ from: this.walletAddress }).on('receipt', resolve)
     })
     await this.box.public.set(KEY_DID, this.getDID(receipt.contractAddress))
+    await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_WALLET)
     return await this.getIdentity()
   }
 
@@ -60,7 +64,8 @@ class ClaimtasticEthereum extends Claimtastic {
       tx.send({ from: this.walletAddress }).on('receipt', resolve)
     })
     const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
-    await this.box.public.set(KEY_DID, this.getDIDWithManager(identityAddress))
+    await this.box.public.set(KEY_DID, this.getDID(identityAddress))
+    await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_CONTRACT)
     return await this.getIdentity()
   }
 
@@ -107,10 +112,6 @@ class ClaimtasticEthereum extends Claimtastic {
 
   getDID(contractAddress) {
     return `did:erc725:${contractAddress}`
-  }
-
-  getDIDWithManager(contractAddress) {
-    return `did:erc725+:${contractAddress}`
   }
 }
 
