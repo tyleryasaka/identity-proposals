@@ -4,7 +4,7 @@
   "description": "an implementation of claimtastic.js on Ethereum",
   "main": "src/index.js",
   "scripts": {
-    "start": "webpack-dev-server --open --config-name demo",
+    "demo": "webpack-dev-server --open --config-name demo",
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
