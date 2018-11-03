@@ -29,7 +29,8 @@ window.addClaim = async function() {
 }
 
 window.getClaims = async function() {
-  const claims = await claimtasticEthereum.getClaims()
+  const id = await claimtasticEthereum.getIdentity()
+  const claims = await claimtasticEthereum.getClaims(id)
   console.log('claims', claims)
 }
 

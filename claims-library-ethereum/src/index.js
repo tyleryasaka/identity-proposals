@@ -5,17 +5,10 @@ const IdentityFactoryContract = require('../../build/contracts/IdentityFactory.j
 const Web3 = require('web3')
 
 const KEY_DID = 'DID'
-const KEY_IDENTITY_MANAGEMENT_SCHEME = '725-management-scheme'
-const SCHEME_WALLET = 'wallet'
-const SCHEME_CONTRACT = 'contract'
+const KEY_CLAIMS = 'claims'
 
 // for development purposes only
 const RINKEBY_CONTRACT_ADDRESS = '0x0041c932B4EFe5c835959fA28BA2E0301d9712FA'
-
-function getToday() {
-  const today = new Date()
-  return `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
-}
 
 class ClaimtasticEthereum extends Claimtastic {
   constructor({ web3 }) {
@@ -48,7 +41,7 @@ class ClaimtasticEthereum extends Claimtastic {
     const receipt = await new Promise(resolve => {
       deployment.send({ from: this.walletAddress }).on('receipt', resolve)
     })
-    await this.box.public.set(KEY_DID, this.getDID(receipt.contractAddress))
+    await this.box.public.set(KEY_DID, this._getDID(receipt.contractAddress))
     await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_WALLET)
     return await this.getIdentity()
   }
@@ -64,17 +57,24 @@ class ClaimtasticEthereum extends Claimtastic {
       tx.send({ from: this.walletAddress }).on('receipt', resolve)
     })
     const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
-    await this.box.public.set(KEY_DID, this.getDID(identityAddress))
+    await this.box.public.set(KEY_DID, this._getDID(identityAddress))
     await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_CONTRACT)
     return await this.getIdentity()
   }
 
   async getIdentity(walletAddress) {
     walletAddress = walletAddress || this.walletAddress
+    const profile = await this._getProfile(walletAddress)
+    return profile ? profile[KEY_DID] : null
+  }
+
+  async _signClaim(claim) {
+    return ''
+  }
+
+  async _getProfile(walletAddress) {
     try {
-      const profile = await Box.getProfile(walletAddress)
-      console.log('profilee', profile)
-      return profile[KEY_DID]
+      return await Box.getProfile(walletAddress)
     } catch(e) {
       if (JSON.parse(e).message === 'address not linked') {
         return null
@@ -84,13 +84,17 @@ class ClaimtasticEthereum extends Claimtastic {
     }
   }
 
-  async _signClaim(claim) {
-    return ''
-  }
-
   async _getClaims(subjectId) {
     this._requireUnlocked()
-    return (await this.box.public.get('claims')) || []
+    const wallet = subjectId ? (await this._getWallet(subjectId)) : this.walletAddress
+    if (!wallet) {
+      return []
+    }
+    const profile = await this._getProfile(wallet)
+    if (!profile || !profile[KEY_CLAIMS]) {
+      return []
+    }
+    return profile[KEY_CLAIMS]
   }
 
   async _isValid(claim) {
@@ -101,17 +105,37 @@ class ClaimtasticEthereum extends Claimtastic {
   async _addClaim(claim) {
     this._requireUnlocked()
     claim.id = this.web3.utils.sha3(JSON.stringify(claim))
-    const claims = (await this.box.public.get('claims')) || []
+    const claims = (await this.box.public.get(KEY_CLAIMS)) || []
     if (claims.map(c => c.id).includes(claim.id)) {
       throw new Error(`Claim with id ${claim.id} already exists`)
     }
     claims.push(claim)
-    await this.box.public.set('claims', claims)
+    await this.box.public.set(KEY_CLAIMS, claims)
     return true
   }
 
-  getDID(contractAddress) {
+  _getDID(contractAddress) {
     return `did:erc725:${contractAddress}`
+  }
+
+  _getDIDWithManager(contractAddress) {
+    return `did:erc725+:${contractAddress}`
+  }
+
+  async _getWallet(did) {
+    const split = did.split(':')
+    const scheme = split[1]
+    const contractAddress = split[2]
+    const identityContract = new this.web3.eth.Contract(
+      IdentityContract.abi,
+      contractAddress
+    )
+    const owner = await identityContract.methods.owner().call()
+    if (scheme === 'erc725') {
+      return owner
+    } else if (scheme === 'erc725+') {
+      // TODO think about how to get wallet from identity manager
+    }
   }
 }
 
