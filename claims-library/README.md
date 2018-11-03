@@ -44,7 +44,6 @@ Implementations (inherited classes) should define these methods. Javascript does
 
 #### \_addClaim
 - input:
-  - `subjectId`: `id` of subject identity (string)
   - `claim`: the claim object (json)
 - returns: promise -> success (boolean)
 
@@ -65,7 +64,7 @@ class MyImplementation extends Claimtastic {
     return isValid
   }
 
-  async _addClaim(subjectId, claim) {
+  async _addClaim(claim) {
     // ...
     return success
   }
