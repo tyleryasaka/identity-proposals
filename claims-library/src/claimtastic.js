@@ -32,10 +32,20 @@ class Claimtastic {
     return this._isValidStructure(claim)
   }
 
+  isSelfClaim(claim) {
+    return claim.type.includes(SELF_CLAIM_TYPE) && (claim.issuer === claim.claim.id)
+  }
+
   async getClaims(subjectId) {
     const claims = await this._getClaims(subjectId)
     const claimsValidity = await Promise.all(claims.map(async claim => {
-      return this._isValidStructure(claim) && (await this._isValid(claim))
+      if (!this._isValidStructure(claim)) {
+        return false
+      }
+      if (this.isSelfClaim(claim)) {
+        return true
+      }
+      return await this._isValid(claim)
     }))
     const validClaims = claims.filter((claim, c) => {
       return claimsValidity[c]
