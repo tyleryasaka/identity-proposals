@@ -1,8 +1,8 @@
 {
-  "name": "claimtastic.js",
+  "name": "claimtastic",
   "version": "0.0.0",
   "description": "A minimal javascript library for managing claims",
-  "main": "index.js",
+  "main": "src/claimtastic.js",
   "scripts": {
     "test": "npx mocha"
   },
