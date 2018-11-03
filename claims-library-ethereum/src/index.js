@@ -63,7 +63,11 @@ class ClaimtasticEthereum extends Claimtastic {
   }
 
   async _isValid(claim) {
-    return true
+    // self claims are automatically valid
+    if (claim.type.includes('SelfClaim') && claim.issuer === claim.claim.id) {
+      return true
+    }
+    return false
   }
 
   async _addClaim(claim) {
