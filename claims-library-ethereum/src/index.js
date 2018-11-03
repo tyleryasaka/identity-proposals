@@ -25,12 +25,6 @@ class ClaimtasticEthereum extends Claimtastic {
     this.unlocked = true
   }
 
-  _requireUnlocked() {
-    if (!this.unlocked) {
-      throw new Error('ClaimtasticEthereum has not been unlocked yet')
-    }
-  }
-
   async createIdentity() {
     this._requireUnlocked()
     const identityContract = new this.web3.eth.Contract(IdentityContract.abi)
@@ -66,6 +60,12 @@ class ClaimtasticEthereum extends Claimtastic {
     walletAddress = walletAddress || this.walletAddress
     const profile = await this._getProfile(walletAddress)
     return profile ? profile[KEY_DID] : null
+  }
+
+  _requireUnlocked() {
+    if (!this.unlocked) {
+      throw new Error('ClaimtasticEthereum has not been unlocked yet')
+    }
   }
 
   async _signClaim(claim) {
