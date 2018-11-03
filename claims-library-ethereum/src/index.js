@@ -35,11 +35,11 @@ class ClaimtasticEthereum extends Claimtastic {
       deployment.send({ from: this.walletAddress }).on('receipt', resolve)
     })
     await this.box.public.set('identity-contract', receipt.contractAddress)
-    const id = await this.getSubjectId(this.walletAddress)
+    const id = await this.getSubjectIdentity(this.walletAddress)
     return id
   }
 
-  async getSubjectId(walletAddress) {
+  async getSubjectIdentity(walletAddress) {
     walletAddress = walletAddress || this.walletAddress
     try {
       const profile = await Box.getProfile(walletAddress)
