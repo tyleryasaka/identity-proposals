@@ -84,8 +84,16 @@ class Claimtastic {
     return success
   }
 
-  async addAttestation(subjectId, claimId, issuerId, issued, signature) {
-    const claim = {
+  async issueAttestation(subjectId, claimId, issuerId) {
+    const issued = getToday()
+    const subjectClaims = await this.getClaims(subjectId)
+    const claim = subjectClaims.find(c => c.id === claimId)
+    if (!claim) {
+      throw new Error(`Claim with id ${claimId} not found on subject ${subjectId}`)
+    }
+    const signature = await this._signClaim(claim)
+    // the subject identity should add this claim to their account
+    return {
       type: ['Credential', 'Attestation'],
       issuer: issuerId,
       issued: issued,
@@ -98,8 +106,6 @@ class Claimtastic {
         signatureValue: signature
       }
     }
-    const success = await this._addClaim(claim)
-    return success
   }
 }
 

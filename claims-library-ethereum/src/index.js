@@ -1,7 +1,18 @@
 const Claimtastic = require('../../claims-library/src/claimtastic.js')
 const Box = require('@tyleryasaka/3box')
 const IdentityContract = require('../../build/contracts/Identity.json')
+const IdentityFactoryContract = require('../../build/contracts/IdentityFactory.json')
 const Web3 = require('web3')
+
+const KEY_DID = 'DID'
+
+// for development purposes only
+const RINKEBY_CONTRACT_ADDRESS = '0x0041c932B4EFe5c835959fA28BA2E0301d9712FA'
+
+function getToday() {
+  const today = new Date()
+  return `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+}
 
 class ClaimtasticEthereum extends Claimtastic {
   constructor({ web3 }) {
@@ -34,20 +45,31 @@ class ClaimtasticEthereum extends Claimtastic {
     const receipt = await new Promise(resolve => {
       deployment.send({ from: this.walletAddress }).on('receipt', resolve)
     })
-    await this.box.public.set('identity-contract', receipt.contractAddress)
-    const id = await this.getSubjectIdentity(this.walletAddress)
-    return id
+    await this.box.public.set(KEY_DID, this.getDID(receipt.contractAddress))
+    return await this.getIdentity()
   }
 
-  async getSubjectIdentity(walletAddress) {
+  async createIdentityWithManager() {
+    this._requireUnlocked()
+    const identityFactoryContract = new this.web3.eth.Contract(
+      IdentityFactoryContract.abi,
+      RINKEBY_CONTRACT_ADDRESS
+    )
+    const tx = identityFactoryContract.methods.createIdentityWithManager()
+    const receipt = await new Promise(resolve => {
+      tx.send({ from: this.walletAddress }).on('receipt', resolve)
+    })
+    const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
+    await this.box.public.set(KEY_DID, this.getDIDWithManager(identityAddress))
+    return await this.getIdentity()
+  }
+
+  async getIdentity(walletAddress) {
     walletAddress = walletAddress || this.walletAddress
     try {
       const profile = await Box.getProfile(walletAddress)
-      const identityContract = profile['identity-contract']
-      if (!identityContract) {
-        return null
-      }
-      return `did:erc725:${identityContract}`
+      console.log('profilee', profile)
+      return profile[KEY_DID]
     } catch(e) {
       if (JSON.parse(e).message === 'address not linked') {
         return null
@@ -55,6 +77,10 @@ class ClaimtasticEthereum extends Claimtastic {
         throw e
       }
     }
+  }
+
+  async _signClaim(claim) {
+    return ''
   }
 
   async _getClaims(subjectId) {
@@ -77,6 +103,14 @@ class ClaimtasticEthereum extends Claimtastic {
     claims.push(claim)
     await this.box.public.set('claims', claims)
     return true
+  }
+
+  getDID(contractAddress) {
+    return `did:erc725:${contractAddress}`
+  }
+
+  getDIDWithManager(contractAddress) {
+    return `did:erc725+:${contractAddress}`
   }
 }
 

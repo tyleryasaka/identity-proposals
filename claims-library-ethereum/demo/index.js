@@ -16,12 +16,12 @@ window.getId = async function() {
   console.log('hi')
   const accounts = await claimtasticEthereum.web3.eth.getAccounts()
   console.log('accounts', accounts)
-  const profile = await claimtasticEthereum.getSubjectIdentity(accounts[0])
+  const profile = await claimtasticEthereum.getIdentity(accounts[0])
   console.log('profile', profile)
 }
 
 window.addClaim = async function() {
-  const subjectId = await claimtasticEthereum.getSubjectIdentity()
+  const subjectId = await claimtasticEthereum.getIdentity()
   const success = await claimtasticEthereum.addSelfClaim(subjectId, 'SpiritAnimal', {
     animal: 'northern bobwhite'
   })
