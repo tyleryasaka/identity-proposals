@@ -1,4 +1,4 @@
-const Claimtastic = require('claimtastic')
+const Claimtastic = require('../../claims-library/src/claimtastic.js')
 const Box = require('@tyleryasaka/3box')
 const IdentityContract = require('../../build/contracts/Identity.json')
 const Web3 = require('web3')
