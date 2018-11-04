@@ -25,6 +25,7 @@
     "webpack-dev-server": "^3.1.10"
   },
   "dependencies": {
+    "cryptiles": ">=4.1.2",
     "@tyleryasaka/3box": "1.0.5"
   }
 }
