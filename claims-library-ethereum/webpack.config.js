@@ -7,10 +7,7 @@ module.exports = [{
   output: {
     filename: 'demo.js',
     path: path.resolve(__dirname, 'dist')
-  },
-  externals:[{
-    xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}'
-  }]
+  }
 },{
   name: 'source',
   mode: 'production',
@@ -18,8 +15,5 @@ module.exports = [{
   output: {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist')
-  },
-  externals:[{
-    xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}'
-  }]
+  }
 }]
