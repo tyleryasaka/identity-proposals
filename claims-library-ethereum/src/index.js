@@ -44,7 +44,7 @@ class ClaimtasticEthereum extends Claimtastic {
       })
       const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
       await this.box.public.set(KEY_DID, this._getDID(identityAddress))
-      return await this.getIdentity()
+      return this.getIdentity()
   }
 
   async getIdentity(walletAddress) {
@@ -116,7 +116,7 @@ class ClaimtasticEthereum extends Claimtastic {
       ThreeBoxLinkerContract.abi,
       LINKER_ADDRESS_RINKEBY
     )
-    return await threeBoxLinkerContract.methods.getThreeBox(contractAddress).call()
+    return threeBoxLinkerContract.methods.getThreeBox(contractAddress).call()
   }
 
   // async deploy() {
