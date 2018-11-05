@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/tyleryasaka/identity-proposals#readme",
   "devDependencies": {
+    "@babel/runtime": "^7.1.2",
     "web3": "^1.0.0-beta.36",
     "webpack": "^4.24.0",
     "webpack-cli": "^3.1.2",
@@ -26,6 +27,6 @@
   },
   "dependencies": {
     "cryptiles": ">=4.1.2",
-    "@tyleryasaka/3box": "1.0.5"
+    "3box": "1.0.3"
   }
 }
