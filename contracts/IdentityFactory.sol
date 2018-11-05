@@ -24,4 +24,11 @@ contract IdentityFactory {
         identity.transferOwnership(address(identityManager));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
+
+    function createIdentityWithExecution(uint256 operationType, address to, uint256 value, bytes data) public {
+        Identity identity = new Identity(address(this));
+        identity.execute(operationType, to, value, data);
+        identity.transferOwnership(msg.sender);
+        emit CreatedIdentityWithManager(address(identity), msg.sender);
+    }
 }

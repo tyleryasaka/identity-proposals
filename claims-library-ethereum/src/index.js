@@ -2,13 +2,15 @@ const Claimtastic = require('../../claims-library/src/claimtastic.js')
 const Box = require('3box')
 const IdentityContract = require('../../build/contracts/Identity.json')
 const IdentityFactoryContract = require('../../build/contracts/IdentityFactory.json')
+const ThreeBoxLinkerContract = require('../../build/contracts/ThreeBoxLinker.json')
 const Web3 = require('web3')
 
 const KEY_DID = 'DID'
 const KEY_CLAIMS = 'claims'
 
 // for development purposes only
-const RINKEBY_CONTRACT_ADDRESS = '0x0041c932B4EFe5c835959fA28BA2E0301d9712FA'
+const FACTORY_ADDRESS_RINKEBY = '0xa88127A96085091b468ecD4851f2db9CC8586327'
+const LINKER_ADDRESS_RINKEBY = '0x88cbd9B79EA52e08E77cAb692D5e59a3Af685fc8'
 
 class ClaimtasticEthereum extends Claimtastic {
   constructor({ web3 }) {
@@ -26,34 +28,23 @@ class ClaimtasticEthereum extends Claimtastic {
   }
 
   async createIdentity() {
-    this._requireUnlocked()
-    const identityContract = new this.web3.eth.Contract(IdentityContract.abi)
-    const deployment = identityContract.deploy({
-      data: IdentityContract.bytecode,
-      arguments: [this.walletAddress]
-    })
-    const receipt = await new Promise(resolve => {
-      deployment.send({ from: this.walletAddress }).on('receipt', resolve)
-    })
-    await this.box.public.set(KEY_DID, this._getDID(receipt.contractAddress))
-    await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_WALLET)
-    return await this.getIdentity()
-  }
-
-  async createIdentityWithManager() {
-    this._requireUnlocked()
-    const identityFactoryContract = new this.web3.eth.Contract(
-      IdentityFactoryContract.abi,
-      RINKEBY_CONTRACT_ADDRESS
-    )
-    const tx = identityFactoryContract.methods.createIdentityWithManager()
-    const receipt = await new Promise(resolve => {
-      tx.send({ from: this.walletAddress }).on('receipt', resolve)
-    })
-    const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
-    await this.box.public.set(KEY_DID, this._getDID(identityAddress))
-    await this.box.public.set(KEY_IDENTITY_MANAGEMENT_SCHEME, SCHEME_CONTRACT)
-    return await this.getIdentity()
+      this._requireUnlocked()
+      const identityFactoryContract = new this.web3.eth.Contract(
+        IdentityFactoryContract.abi,
+        FACTORY_ADDRESS_RINKEBY
+      )
+      const threeBoxLinkerContract = new this.web3.eth.Contract(
+        ThreeBoxLinkerContract.abi,
+        LINKER_ADDRESS_RINKEBY
+      )
+      const executionData = threeBoxLinkerContract.methods.setThreeBox(this.walletAddress).encodeABI()
+      const tx = identityFactoryContract.methods.createIdentityWithExecution(0, LINKER_ADDRESS_RINKEBY, 0, executionData)
+      const receipt = await new Promise(resolve => {
+        tx.send({ from: this.walletAddress }).on('receipt', resolve)
+      })
+      const identityAddress = receipt.events.CreatedIdentityWithManager.returnValues.identity
+      await this.box.public.set(KEY_DID, this._getDID(identityAddress))
+      return await this.getIdentity()
   }
 
   async getIdentity(walletAddress) {
@@ -118,25 +109,28 @@ class ClaimtasticEthereum extends Claimtastic {
     return `did:erc725:${contractAddress}`
   }
 
-  _getDIDWithManager(contractAddress) {
-    return `did:erc725+:${contractAddress}`
-  }
-
   async _getWallet(did) {
     const split = did.split(':')
-    const scheme = split[1]
     const contractAddress = split[2]
-    const identityContract = new this.web3.eth.Contract(
-      IdentityContract.abi,
-      contractAddress
+    const threeBoxLinkerContract = new this.web3.eth.Contract(
+      ThreeBoxLinkerContract.abi,
+      LINKER_ADDRESS_RINKEBY
     )
-    const owner = await identityContract.methods.owner().call()
-    if (scheme === 'erc725') {
-      return owner
-    } else if (scheme === 'erc725+') {
-      // TODO think about how to get wallet from identity manager
-    }
+    return await threeBoxLinkerContract.methods.getThreeBox(contractAddress).call()
   }
+
+  // async deploy() {
+  //   const accounts = await this.web3.eth.getAccounts()
+  //   const threeBoxLinkerContract = new this.web3.eth.Contract(IdentityFactoryContract.abi)
+  //   const deployment = threeBoxLinkerContract.deploy({
+  //     data: IdentityFactoryContract.bytecode,
+  //     arguments: []
+  //   })
+  //   const receipt = await new Promise(resolve => {
+  //     deployment.send({ from: accounts[0] }).on('receipt', resolve)
+  //   })
+  //   console.log('deployed factory', receipt)
+  // }
 }
 
 module.exports = ClaimtasticEthereum
