@@ -22,7 +22,7 @@ class ClaimtasticEthereum extends Claimtastic {
   async unlock({ box } = {}) {
     const boxInstance = box || Box
     const accounts = await this.web3.eth.getAccounts()
-    this.walletAddress = accounts[0]
+    this.web3.eth.defaultAccount = this.walletAddress = accounts[0]
     this.box = await boxInstance.openBox(this.walletAddress, this.web3.currentProvider)
     this.unlocked = true
   }
@@ -59,8 +59,23 @@ class ClaimtasticEthereum extends Claimtastic {
     }
   }
 
-  async _signClaim(claim) {
-    return ''
+  async _signClaim(claimHash) {
+    // TODO: fix this. some reason signature recovery only works with data hashed this way.
+    // this makes the signing data unreadable
+    const secondHash = this.web3.utils.sha3(claimHash)
+    return this.web3.eth.personal.sign(secondHash, this.walletAddress)
+  }
+
+  async _isValidSignature(claimHash, signature, issuer) {
+    try {
+      const secondHash = this.web3.utils.sha3(claimHash)
+      const recovered = await this.web3.eth.personal.ecRecover(secondHash, signature)
+      const issuerWallet = await this._getWallet(issuer)
+      return this._checksum(recovered) === this._checksum(issuerWallet)
+    } catch(e) {
+      console.error(e)
+      return false
+    }
   }
 
   async _getProfile(walletAddress) {
@@ -76,7 +91,6 @@ class ClaimtasticEthereum extends Claimtastic {
   }
 
   async _getClaims(subjectId) {
-    this._requireUnlocked()
     const wallet = subjectId ? (await this._getWallet(subjectId)) : this.walletAddress
     if (!wallet) {
       return []
@@ -88,14 +102,13 @@ class ClaimtasticEthereum extends Claimtastic {
     return profile[KEY_CLAIMS]
   }
 
-  async _isValid(claim) {
-    // TODO
-    return false
+  _checksum(address) {
+    return this.web3.utils.toChecksumAddress(address)
   }
 
   async _addClaim(claim) {
     this._requireUnlocked()
-    claim.id = this.web3.utils.sha3(JSON.stringify(claim))
+    claim.id = this._hashClaim(claim)
     const claims = (await this.box.public.get(KEY_CLAIMS)) || []
     if (claims.map(c => c.id).includes(claim.id)) {
       throw new Error(`Claim with id ${claim.id} already exists`)
