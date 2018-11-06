@@ -41,6 +41,9 @@ class Claimtastic {
       if (!this._isValidStructure(claim)) {
         return false
       }
+      if (claim.claim.id !== subjectId) {
+        return false
+      }
       if (this.isSelfClaim(claim)) {
         return true
       }
