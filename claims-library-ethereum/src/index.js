@@ -108,7 +108,6 @@ class ClaimtasticEthereum extends Claimtastic {
 
   async _addClaim(claim) {
     this._requireUnlocked()
-    claim.id = this._hashClaim(claim)
     const claims = (await this.box.public.get(KEY_CLAIMS)) || []
     if (claims.map(c => c.id).includes(claim.id)) {
       throw new Error(`Claim with id ${claim.id} already exists`)

@@ -37,21 +37,7 @@ class Claimtastic {
 
   async getClaims(subjectId) {
     const claims = await this._getClaims(subjectId)
-    const claimsValidity = await Promise.all(claims.map(async claim => {
-      if (!this._isValidStructure(claim)) {
-        return false
-      }
-      if (claim.claim.id !== subjectId) {
-        return false
-      }
-      if (this.isSelfClaim(claim)) {
-        return true
-      }
-      const hash = this._hashClaim(claim)
-      const signature = claim.signature.signatureValue
-      const issuer = claim.issuer
-      return await this._isValidSignature(hash, signature, issuer)
-    }))
+    const claimsValidity = await Promise.all(claims.map(c => this._isValidClaim(c, subjectId)))
     const validClaims = claims.filter((claim, c) => {
       return claimsValidity[c]
     })
@@ -68,11 +54,12 @@ class Claimtastic {
   async getAttestations(subjectId, claimId) {
     const claims = await this.getClaims(subjectId)
     return claims.filter(claim => {
-      return claim.type.includes(ATTESTATION_TYPE) && (claim.targetClaim === claimId)
+      return claim.type.includes(ATTESTATION_TYPE) && (claim.claim.targetClaim === claimId)
     })
   }
 
   async addClaim(claim) {
+    claim.id = this._hashClaim(claim)
     const success = await this._addClaim(claim)
     return success
   }
@@ -85,7 +72,7 @@ class Claimtastic {
       issued: getToday(),
       claim: claimData
     }
-    const success = await this._addClaim(claim)
+    const success = await this.addClaim(claim)
     return success
   }
 
@@ -102,7 +89,7 @@ class Claimtastic {
       issued,
       claim: {
         id: subjectId,
-        data: targetClaim
+        targetClaim: claimId
       }
     }
     const hash = this._hashClaim(claim)
@@ -112,12 +99,36 @@ class Claimtastic {
     return claim
   }
 
+  async _isValidClaim(claim, subjectId) {
+    if (!this._isValidStructure(claim)) {
+      return false
+    }
+    if (!this._isChecksumValid(claim)) {
+      return false
+    }
+    if (claim.claim.id !== subjectId) {
+      return false
+    }
+    if (this.isSelfClaim(claim)) {
+      return true
+    }
+    const hash = this._hashClaim(claim)
+    const signature = claim.signature.signatureValue
+    const issuer = claim.issuer
+    return this._isValidSignature(hash, signature, issuer)
+  }
+
   _hashClaim(claim) {
     return hash(claim, {
       excludeKeys: (key) => {
         return (key === 'id') || (key === 'signature')
       }
     })
+  }
+
+  _isChecksumValid(claim) {
+    const hash = this._hashClaim(claim)
+    return hash === claim.id
   }
 }
 
