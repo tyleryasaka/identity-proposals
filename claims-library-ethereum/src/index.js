@@ -3,14 +3,18 @@ const Box = require('3box')
 const IdentityContract = require('../../build/contracts/Identity.json')
 const IdentityFactoryContract = require('../../build/contracts/IdentityFactory.json')
 const ThreeBoxLinkerContract = require('../../build/contracts/ThreeBoxLinker.json')
+const ClaimRegistry780Contract = require('../../build/contracts/ClaimRegistry780.json')
 const Web3 = require('web3')
 
 const KEY_DID = 'DID'
 const KEY_CLAIMS = 'claims'
 
+const emptyRevocation = '0x0000000000000000000000000000000000000000000000000000000000000000'
+
 // for development purposes only
 const FACTORY_ADDRESS_RINKEBY = '0xa88127A96085091b468ecD4851f2db9CC8586327'
 const LINKER_ADDRESS_RINKEBY = '0x88cbd9B79EA52e08E77cAb692D5e59a3Af685fc8'
+const REGISTRY_ADDRESS_RINKEBY = '0xeD06550D5Ab30b6851AB9b16CC31fe301cFEdfe0'
 
 class ClaimtasticEthereum extends Claimtastic {
   constructor({ web3 }) {
@@ -74,7 +78,9 @@ class ClaimtasticEthereum extends Claimtastic {
       const secondHash = this.web3.utils.sha3(claimHash)
       const recovered = await this.web3.eth.personal.ecRecover(secondHash, signature)
       const issuerWallet = await this._getWallet(issuer)
-      return this._checksum(recovered) === this._checksum(issuerWallet)
+      const isGoodSignature = this._checksum(recovered) === this._checksum(issuerWallet)
+      const isRevoked = await this._isRevoked(signature, issuerWallet)
+      return isGoodSignature && !isRevoked
     } catch(e) {
       console.error(e)
       return false
@@ -142,6 +148,20 @@ class ClaimtasticEthereum extends Claimtastic {
       LINKER_ADDRESS_RINKEBY
     )
     return threeBoxLinkerContract.methods.getThreeBox(contractAddress).call()
+  }
+
+  async _isRevoked(signature, issuerWallet) {
+    const key = this.web3.utils.sha3(signature)
+    const claimRegistryContract = new this.web3.eth.Contract(
+      ClaimRegistry780Contract.abi,
+      REGISTRY_ADDRESS_RINKEBY
+    )
+    const revocation = await claimRegistryContract.methods.getClaim(
+      issuerWallet,
+      issuerWallet,
+      key
+    ).call()
+    return revocation !== emptyRevocation
   }
 
   // async deploy() {
