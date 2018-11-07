@@ -59,8 +59,11 @@ class Claimtastic {
 
   async issueAttestation(subjectId, claimId, issuerId) {
     const issued = getToday()
-    const subjectClaims = await this.getClaims(subjectId)
+    const subjectClaims = await this._getClaims(subjectId)
     const targetClaim = subjectClaims.find(c => c.id === claimId)
+    if (!this._isValidClaim(targetClaim, subjectId)) {
+      throw new Error(`Claim with id ${claimId} is not valid`)
+    }
     if (!targetClaim) {
       throw new Error(`Claim with id ${claimId} not found on subject ${subjectId}`)
     }
