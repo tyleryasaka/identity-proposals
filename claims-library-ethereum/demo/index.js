@@ -23,7 +23,7 @@ window.getId = async function() {
 window.addClaim = async function() {
   const subjectId = await claimtasticEthereum.getIdentity()
   const success = await claimtasticEthereum.addSelfClaim(subjectId, 'SpiritAnimal', {
-    animal: 'northern bobwhite'
+    animal: 'swordfish'
   })
   console.log('success', success)
 }
