@@ -19,6 +19,10 @@ class ClaimtasticEthereum extends Claimtastic {
     this.web3 = new Web3(provider)
   }
 
+  /*
+    Public methods
+  */
+
   async unlock({ box } = {}) {
     const boxInstance = box || Box
     const accounts = await this.web3.eth.getAccounts()
@@ -53,11 +57,10 @@ class ClaimtasticEthereum extends Claimtastic {
     return profile ? profile[KEY_DID] : null
   }
 
-  _requireUnlocked() {
-    if (!this.unlocked) {
-      throw new Error('ClaimtasticEthereum has not been unlocked yet')
-    }
-  }
+  /*
+    Private methods - used by base class
+    These methods are required by the base class. The child class is responsible for implementing them.
+  */
 
   async _signClaim(claimHash) {
     // TODO: fix this. some reason signature recovery only works with data hashed this way.
@@ -78,16 +81,15 @@ class ClaimtasticEthereum extends Claimtastic {
     }
   }
 
-  async _getProfile(walletAddress) {
-    try {
-      return await Box.getProfile(walletAddress)
-    } catch(e) {
-      if (JSON.parse(e).message === 'address not linked') {
-        return null
-      } else {
-        throw e
-      }
+  async _addClaim(claim) {
+    this._requireUnlocked()
+    const claims = (await this.box.public.get(KEY_CLAIMS)) || []
+    if (claims.map(c => c.id).includes(claim.id)) {
+      throw new Error(`Claim with id ${claim.id} already exists`)
     }
+    claims.push(claim)
+    await this.box.public.set(KEY_CLAIMS, claims)
+    return true
   }
 
   async _getClaims(subjectId) {
@@ -102,19 +104,30 @@ class ClaimtasticEthereum extends Claimtastic {
     return profile[KEY_CLAIMS]
   }
 
-  _checksum(address) {
-    return this.web3.utils.toChecksumAddress(address)
+  /*
+    Private methods - used by this inherited class
+  */
+
+  _requireUnlocked() {
+    if (!this.unlocked) {
+      throw new Error('ClaimtasticEthereum has not been unlocked yet')
+    }
   }
 
-  async _addClaim(claim) {
-    this._requireUnlocked()
-    const claims = (await this.box.public.get(KEY_CLAIMS)) || []
-    if (claims.map(c => c.id).includes(claim.id)) {
-      throw new Error(`Claim with id ${claim.id} already exists`)
+  async _getProfile(walletAddress) {
+    try {
+      return await Box.getProfile(walletAddress)
+    } catch(e) {
+      if (JSON.parse(e).message === 'address not linked') {
+        return null
+      } else {
+        throw e
+      }
     }
-    claims.push(claim)
-    await this.box.public.set(KEY_CLAIMS, claims)
-    return true
+  }
+
+  _checksum(address) {
+    return this.web3.utils.toChecksumAddress(address)
   }
 
   _getDID(contractAddress) {
