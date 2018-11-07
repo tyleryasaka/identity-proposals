@@ -27,22 +27,6 @@ class Claimtastic {
     }
   }
 
-  isValidStructure(claim) {
-    return this._isValidStructure(claim)
-  }
-
-  _isSelfClaim(claim) {
-    return claim.type.includes(SELF_CLAIM_TYPE) && (claim.issuer === claim.claim.id)
-  }
-
-  _isAttestation(claim) {
-    return claim.type.includes(ATTESTATION_TYPE)
-  }
-
-  _isBadge(claim) {
-    return !this._isSelfClaim(claim) && !this._isAttestation(claim)
-  }
-
   async getClaims(subjectId) {
     const claims = await this._getClaims(subjectId)
     const claimsValidity = await Promise.all(claims.map(c => this._isValidClaim(c, subjectId)))
@@ -50,29 +34,9 @@ class Claimtastic {
       return claimsValidity[c]
     })
     return {
-      badges: this.getBadges(validClaims),
-      selfClaims: this.getSelfClaims(validClaims)
+      badges: this._getBadges(validClaims),
+      selfClaims: this._getSelfClaims(validClaims)
     }
-  }
-
-  getSelfClaims(claims) {
-    const selfClaims = claims.filter(c => this._isSelfClaim(c))
-    return selfClaims.map(selfClaim => {
-      return {
-        selfClaim,
-        attestations: this.getAttestations(claims, selfClaim.id)
-      }
-    })
-  }
-
-  getAttestations(claims, claimId) {
-    return claims.filter(c => {
-      return this._isAttestation(c) && (c.claim.targetClaim === claimId)
-    })
-  }
-
-  getBadges(claims) {
-    return claims.filter(c => this._isBadge(c))
   }
 
   async addClaim(claim) {
@@ -114,6 +78,38 @@ class Claimtastic {
     claim.signature = { signatureValue: signature }
     // the subject identity should add this claim to their account
     return claim
+  }
+
+  _getSelfClaims(claims) {
+    const selfClaims = claims.filter(c => this._isSelfClaim(c))
+    return selfClaims.map(selfClaim => {
+      return {
+        selfClaim,
+        attestations: this._getAttestations(claims, selfClaim.id)
+      }
+    })
+  }
+
+  _getAttestations(claims, claimId) {
+    return claims.filter(c => {
+      return this._isAttestation(c) && (c.claim.targetClaim === claimId)
+    })
+  }
+
+  _getBadges(claims) {
+    return claims.filter(c => this._isBadge(c))
+  }
+
+  _isSelfClaim(claim) {
+    return claim.type.includes(SELF_CLAIM_TYPE) && (claim.issuer === claim.claim.id)
+  }
+
+  _isAttestation(claim) {
+    return claim.type.includes(ATTESTATION_TYPE)
+  }
+
+  _isBadge(claim) {
+    return !this._isSelfClaim(claim) && !this._isAttestation(claim)
   }
 
   async _isValidClaim(claim, subjectId) {
