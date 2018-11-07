@@ -31,8 +31,16 @@ class Claimtastic {
     return this._isValidStructure(claim)
   }
 
-  isSelfClaim(claim) {
+  _isSelfClaim(claim) {
     return claim.type.includes(SELF_CLAIM_TYPE) && (claim.issuer === claim.claim.id)
+  }
+
+  _isAttestation(claim) {
+    return claim.type.includes(ATTESTATION_TYPE)
+  }
+
+  _isBadge(claim) {
+    return !this._isSelfClaim(claim) && !this._isAttestation(claim)
   }
 
   async getClaims(subjectId) {
@@ -41,21 +49,30 @@ class Claimtastic {
     const validClaims = claims.filter((claim, c) => {
       return claimsValidity[c]
     })
-    return validClaims
+    return {
+      badges: this.getBadges(validClaims),
+      selfClaims: this.getSelfClaims(validClaims)
+    }
   }
 
-  async getSelfClaims(subjectId) {
-    const claims = await this.getClaims(subjectId)
-    return claims.filter(claim => {
-      return claim.type.includes(SELF_CLAIM_TYPE)
+  getSelfClaims(claims) {
+    const selfClaims = claims.filter(c => this._isSelfClaim(c))
+    return selfClaims.map(selfClaim => {
+      return {
+        selfClaim,
+        attestations: this.getAttestations(claims, selfClaim.id)
+      }
     })
   }
 
-  async getAttestations(subjectId, claimId) {
-    const claims = await this.getClaims(subjectId)
-    return claims.filter(claim => {
-      return claim.type.includes(ATTESTATION_TYPE) && (claim.claim.targetClaim === claimId)
+  getAttestations(claims, claimId) {
+    return claims.filter(c => {
+      return this._isAttestation(c) && (c.claim.targetClaim === claimId)
     })
+  }
+
+  getBadges(claims) {
+    return claims.filter(c => this._isBadge(c))
   }
 
   async addClaim(claim) {
@@ -109,7 +126,7 @@ class Claimtastic {
     if (claim.claim.id !== subjectId) {
       return false
     }
-    if (this.isSelfClaim(claim)) {
+    if (this._isSelfClaim(claim)) {
       return true
     }
     const hash = this._hashClaim(claim)
