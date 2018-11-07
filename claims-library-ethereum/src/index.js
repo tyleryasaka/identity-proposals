@@ -9,7 +9,7 @@ const Web3 = require('web3')
 const KEY_DID = 'DID'
 const KEY_CLAIMS = 'claims'
 
-const emptyRevocation = '0x0000000000000000000000000000000000000000000000000000000000000000'
+const REVOCATION_VALUE = '0x0000000000000000000000000000000000000000000000000000000000000001'
 
 // for development purposes only
 const FACTORY_ADDRESS_RINKEBY = '0xa88127A96085091b468ecD4851f2db9CC8586327'
@@ -61,6 +61,34 @@ class ClaimtasticEthereum extends Claimtastic {
     return profile ? profile[KEY_DID] : null
   }
 
+  async revokeClaim(subjectId, claimId) {
+    this._requireUnlocked()
+    const claims = await this._getClaims(subjectId)
+    const claim = claims.find(c => c.id === claimId)
+    const signature = claim.signature.signatureValue
+    const signatureHash = this.web3.utils.sha3(signature)
+    const issuerIdentity = await this.getIdentity()
+    const identityAddress = this._getIdentityContract(issuerIdentity)
+    const claimRegistryContract = new this.web3.eth.Contract(
+      ClaimRegistry780Contract.abi,
+      REGISTRY_ADDRESS_RINKEBY
+    )
+    const identityContract = new this.web3.eth.Contract(
+      IdentityContract.abi,
+      identityAddress
+    )
+    const executionData = claimRegistryContract.methods.setClaim(
+      identityAddress,
+      signatureHash,
+      REVOCATION_VALUE
+    ).encodeABI()
+    const tx = identityContract.methods.execute(0, REGISTRY_ADDRESS_RINKEBY, 0, executionData)
+    const receipt = await new Promise(resolve => {
+      tx.send({ from: this.walletAddress }).on('receipt', resolve)
+    })
+    return true
+  }
+
   /*
     Private methods - used by base class
     These methods are required by the base class. The child class is responsible for implementing them.
@@ -79,7 +107,7 @@ class ClaimtasticEthereum extends Claimtastic {
       const recovered = await this.web3.eth.personal.ecRecover(secondHash, signature)
       const issuerWallet = await this._getWallet(issuer)
       const isGoodSignature = this._checksum(recovered) === this._checksum(issuerWallet)
-      const isRevoked = await this._isRevoked(signature, issuerWallet)
+      const isRevoked = await this._isRevoked(signature, issuer)
       return isGoodSignature && !isRevoked
     } catch(e) {
       console.error(e)
@@ -140,9 +168,12 @@ class ClaimtasticEthereum extends Claimtastic {
     return `did:erc725:${contractAddress}`
   }
 
+  _getIdentityContract(did) {
+    return did.split(':')[2]
+  }
+
   async _getWallet(did) {
-    const split = did.split(':')
-    const contractAddress = split[2]
+    const contractAddress = this._getIdentityContract(did)
     const threeBoxLinkerContract = new this.web3.eth.Contract(
       ThreeBoxLinkerContract.abi,
       LINKER_ADDRESS_RINKEBY
@@ -150,18 +181,19 @@ class ClaimtasticEthereum extends Claimtastic {
     return threeBoxLinkerContract.methods.getThreeBox(contractAddress).call()
   }
 
-  async _isRevoked(signature, issuerWallet) {
-    const key = this.web3.utils.sha3(signature)
+  async _isRevoked(signature, issuer) {
+    const signatureHash = this.web3.utils.sha3(signature)
     const claimRegistryContract = new this.web3.eth.Contract(
       ClaimRegistry780Contract.abi,
       REGISTRY_ADDRESS_RINKEBY
     )
+    const issuerAddress = this._getIdentityContract(issuer)
     const revocation = await claimRegistryContract.methods.getClaim(
-      issuerWallet,
-      issuerWallet,
-      key
+      issuerAddress,
+      issuerAddress,
+      signatureHash
     ).call()
-    return revocation !== emptyRevocation
+    return revocation === REVOCATION_VALUE
   }
 
   // async deploy() {
