@@ -18,7 +18,8 @@ function mainView (state, emit) {
     did,
     name,
     image,
-    inputSpiritAnimal
+    inputSpiritAnimal,
+    loading
   } = state
   const spiritAnimalClaim = selfClaims.length && selfClaims.find(c => c.selfClaim.type.includes('SpiritAnimal'))
   const inputSpiritAnimalValue = spiritAnimalClaim ? spiritAnimalClaim.selfClaim.claim.animal : inputSpiritAnimal
@@ -26,16 +27,14 @@ function mainView (state, emit) {
   const spiritAnimalDisabled = hasSpiritAnimal ? 'disabled' : null
   const _name = name ? name : 'Anonymous'
   const src = image ? `https://ipfs.infura.io/ipfs/${image.contentUrl['/']}` : 'http://tachyons.io/img/logo.jpg'
-  const lockMessage = html`
-    <body class="sans-serif">
-      <section class="mw5 mw7-ns center bg-light-gray pa3 ph5-ns">
-        <h1 class="f1 f-headline lh-solid">Your account is locked</h1>
-        <button onclick=${unlock}>Unlock</button>
-      </section>
-    </body>
+  const loadingSpinner = html`
+    <div class="dark-overlay" onclick="return false;">
+      <div class="lds-dual-ring"></div>
+    </div>
   `
   const content = html`
     <body>
+      ${loading ? loadingSpinner : null}
       <header class="tc pv4 pv5-ns">
         <img src=${src} class="br-100 pa1 ba b--black-10 h3 w3" alt="avatar">
         <h1 class="f5 f4-ns fw6 mid-gray">${_name}</h1>
@@ -66,7 +65,7 @@ function mainView (state, emit) {
       ` : null }
     </body>
   `
-  return unlocked ? content : lockMessage
+  return content
 
   async function unlock() {
     emit('unlock')
@@ -77,6 +76,7 @@ function mainView (state, emit) {
   }
 
   async function addSpiritAnimal() {
+    emit('startLoading')
     await claimtasticEthereum.addSelfClaim(
       did,
       'SpiritAnimal',
@@ -86,6 +86,7 @@ function mainView (state, emit) {
   }
 
   async function removeSpiritAnimal() {
+    emit('startLoading')
     await claimtasticEthereum.removeClaim(spiritAnimalClaim.selfClaim.id)
     emit('updateSpiritAnimal', '')
     emit('loadClaims')
@@ -100,11 +101,22 @@ function store (state, emitter) {
   state.claimtasticEthereum = {}
   state.selfClaims = []
   state.inputSpiritAnimal = ''
+  state.loading = true
 
   emitter.on('DOMContentLoaded', function() {
     window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3: window.web3 })
     emitter.emit('render')
     emitter.emit('unlock')
+  })
+
+  emitter.on('startLoading', async function() {
+    state.loading = true
+    emitter.emit('render')
+  })
+
+  emitter.on('endLoading', async function() {
+    state.loading = false
+    emitter.emit('render')
   })
 
   emitter.on('unlock', async function() {
@@ -118,12 +130,14 @@ function store (state, emitter) {
   })
 
   emitter.on('createIdentity', async function () {
+    emitter.emit('startLoading')
     const _did = await state.claimtasticEthereum.createIdentity()
     state.did = _did
-    emitter.emit('render')
+    emitter.emit('endLoading')
   })
 
   emitter.on('loadClaims', async function () {
+    emitter.emit('startLoading')
     const _did = state.did || await state.claimtasticEthereum.getIdentity()
     state.did = _did
     const obj = await state.claimtasticEthereum.getClaims(_did)
@@ -131,6 +145,6 @@ function store (state, emitter) {
     const images = await state.claimtasticEthereum.box.public.get('image')
     state.image = (images && images.length) ? images[0] : null
     state.selfClaims = obj.selfClaims
-    emitter.emit('render')
+    emitter.emit('endLoading')
   })
 }
