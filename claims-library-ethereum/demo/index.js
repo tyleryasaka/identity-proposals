@@ -65,7 +65,8 @@ function mainView (state, emit) {
         </section>
       ` : null }
       <footer class="tc pv4 pv5-ns">
-        <div class="f6 gray fw2 tracked">Not much to see here.</div>
+        <div class="f6 gray fw2 tracked">
+          Copyright and related rights waived via <a class="blue no-underline underline-hover" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0</a>.</div>
       </footer>
     </body>
   `
