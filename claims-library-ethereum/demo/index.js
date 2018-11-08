@@ -63,6 +63,9 @@ function mainView (state, emit) {
           </article>
         </section>
       ` : null }
+      <footer class="tc pv4 pv5-ns">
+        <div class="f6 gray fw2 tracked">Not much to see here.</div>
+      </footer>
     </body>
   `
   return content
@@ -103,10 +106,14 @@ function store (state, emitter) {
   state.inputSpiritAnimal = ''
   state.loading = true
 
-  emitter.on('DOMContentLoaded', function() {
+  emitter.on('DOMContentLoaded', async function() {
     window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3: window.web3 })
     emitter.emit('render')
     emitter.emit('unlock')
+    const id = await state.claimtasticEthereum.web3.eth.net.getId()
+    if (id !== 4) {
+      alert('This only works on Rinkeby right now.')
+    }
   })
 
   emitter.on('startLoading', async function() {
