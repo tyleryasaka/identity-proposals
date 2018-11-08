@@ -17,10 +17,9 @@ const LINKER_ADDRESS_RINKEBY = '0x88cbd9B79EA52e08E77cAb692D5e59a3Af685fc8'
 const REGISTRY_ADDRESS_RINKEBY = '0xeD06550D5Ab30b6851AB9b16CC31fe301cFEdfe0'
 
 class ClaimtasticEthereum extends Claimtastic {
-  constructor({ web3 }) {
+  constructor({ web3Provider }) {
     super()
-    const provider = web3 ? web3.currentProvider : Web3.givenProvider
-    this.web3 = new Web3(provider)
+    this.web3 = new Web3(web3Provider || Web3.givenProvider)
   }
 
   /*
