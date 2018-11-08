@@ -2,7 +2,8 @@ const html = require('choo/html')
 const devtools = require('choo-devtools')
 const choo = require('choo')
 const ClaimtasticEthereum = require('../src/index')
-import '../node_modules/tachyons/css/tachyons.min.css'
+require('../node_modules/tachyons/css/tachyons.min.css')
+require('file-loader?name=[name].[ext]!../index.html')
 
 const app = choo()
 app.use(devtools())
