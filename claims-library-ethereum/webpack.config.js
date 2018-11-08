@@ -8,6 +8,14 @@ module.exports = [{
     filename: 'demo.js',
     path: path.resolve(__dirname, 'dist')
   },
+  module: {
+    rules: [
+      {
+        test:/\.css$/,
+        use:['style-loader','css-loader']
+      }
+    ]
+  },
   externals:[{
     xmlhttprequest: '{XMLHttpRequest:XMLHttpRequest}'
   }]
