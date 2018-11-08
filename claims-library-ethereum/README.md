@@ -7,3 +7,7 @@ claimtastic-ethereum is an implementation of claimtastic.js on Ethereum.
 Architecture description coming. In the meantime, please enjoy this crude diagram:
 
 ![architecture diagram](img/architecture.png)
+
+ ## Demo
+
+ `npm run demo`
