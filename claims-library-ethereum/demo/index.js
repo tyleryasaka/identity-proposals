@@ -53,6 +53,9 @@ function mainView (state, emit) {
           ${!hasSpiritAnimal ? html`
             <div class="mt3"><button class="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6" onclick=${addSpiritAnimal}>Claim my spirit animal</button></div>
           ` : null}
+          ${hasSpiritAnimal ? html`
+            <div class="mt3"><button class="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6" onclick=${removeSpiritAnimal}>Remove this claim</button></div>
+          ` : null}
         </article>
       </section>
     </body>
@@ -73,6 +76,11 @@ function mainView (state, emit) {
       'SpiritAnimal',
       { animal: inputSpiritAnimal }
     )
+    emit('loadClaims')
+  }
+
+  async function removeSpiritAnimal() {
+    await claimtasticEthereum.removeClaim(spiritAnimalClaim.selfClaim.id)
     emit('loadClaims')
   }
 }
