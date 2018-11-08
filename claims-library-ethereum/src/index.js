@@ -32,6 +32,9 @@ class ClaimtasticEthereum extends Claimtastic {
     const accounts = await this.web3.eth.getAccounts()
     this.web3.eth.defaultAccount = this.walletAddress = accounts[0]
     this.box = await boxInstance.openBox(this.walletAddress, this.web3.currentProvider)
+    await new Promise(resolve => {
+      this.box.onSyncDone(resolve)
+    })
     this.unlocked = true
   }
 
