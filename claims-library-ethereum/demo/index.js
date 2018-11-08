@@ -66,8 +66,8 @@ function mainView (state, emit) {
         </section>
       ` : null }
       <footer class="tc pv4 pv5-ns">
-        <div class="f6 gray fw2 tracked">
-          Copyright and related rights waived via <a class="blue no-underline underline-hover" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0</a>.</div>
+        <div class="f6 gray fw2 tracked">Copyright and related rights waived via <a class="blue no-underline underline-hover" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC0</a>.</div>
+        <div class="f6 gray fw2 tracked">Source code on <a class="blue no-underline underline-hover" href="https://github.com/tyleryasaka/identity-proposals/tree/master/claims-library-ethereum" target="_blank">github</a>.</div>
       </footer>
     </body>
   `
