@@ -71,10 +71,6 @@ function mainView (state, emit) {
   `
   return content
 
-  async function unlock() {
-    emit('unlock')
-  }
-
   async function updateSpiritAnimal(evt) {
     emit('updateSpiritAnimal', evt.target.value)
   }
@@ -108,13 +104,33 @@ function store (state, emitter) {
   state.loading = true
 
   emitter.on('DOMContentLoaded', async function() {
-    window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3: window.web3 })
+    if (window.ethereum) {
+      try {
+        // Request account access if needed
+        await ethereum.enable()
+      } catch (error) {
+        console.error('denied access')
+        // User denied account access...
+        return
+      }
+    } else if (!window.web3) {
+      alert('Please use a web3-enabled browser')
+      return
+    }
+    window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3Provider: (window.ethereum || window.web3.currentProvider) })
+    const web3 = state.claimtasticEthereum.web3
+    const id = await web3.eth.net.getId()
+    if (id !== 4) {
+      alert('Please switch to the Rinkeby testnet.')
+      return
+    }
+    const accounts = await web3.eth.getAccounts()
+    if (accounts.length === 0) {
+      alert('Please enable your web3 browser by logging in')
+      return
+    }
     emitter.emit('render')
     emitter.emit('unlock')
-    const id = await state.claimtasticEthereum.web3.eth.net.getId()
-    if (id !== 4) {
-      alert('This only works on Rinkeby right now.')
-    }
   })
 
   emitter.on('startLoading', async function() {
