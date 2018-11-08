@@ -92,6 +92,17 @@ class ClaimtasticEthereum extends Claimtastic {
     return true
   }
 
+  async removeClaim(claimId) {
+    this._requireUnlocked()
+    const claims = (await this.box.public.get(KEY_CLAIMS)) || []
+    const withClaimRemoved = claims.filter(c => c.id !== claimId)
+    if (withClaimRemoved.length === claims.length) {
+      throw new Error(`Claim with id ${claimId} not found`)
+    }
+    await this.box.public.set(KEY_CLAIMS, withClaimRemoved)
+    return true
+  }
+
   /*
     Private methods - used by base class
     These methods are required by the base class. The child class is responsible for implementing them.
