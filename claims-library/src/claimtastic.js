@@ -46,9 +46,7 @@ class Claimtastic {
     const _claim = Object.assign({}, claim)
     _claim.id = this._hashClaim(_claim)
     const success = await this._addClaim(_claim)
-    if (success) {
-      return _claim.id
-    }
+    return success ? _claim.id : null
   }
 
   async addSelfClaim(subjectId, claimType, claimData) {
@@ -60,8 +58,7 @@ class Claimtastic {
       issued: getToday(),
       claim: _claimData
     }
-    const success = await this.addClaim(claim)
-    return success
+    return this.addClaim(claim)
   }
 
   async issueAttestation(subjectId, claimId, issuerId) {
