@@ -17,8 +17,9 @@ This library, then, makes this format easy to use and creates a standard javascr
 ## Terms
 - `identity`
 - `claim`
-- `self claim`
-- `attestation`
+- `self claim`: Self claims are things that the identity says about itself. E.g. "This is my facebook profile" or "I'm a US citizen". A self claim is just a statement - not guaranteed to be true in any way.
+- `attestation`: Attestations are claims by others about the validity of a self claim. E.g. "I have verified that this Facebook profile belongs to this person" or "I have verified that this person is a US citizen". An attestation references a self-claim; a self-claim can have multiple attestations (from different issuers).
+- `badge`: Any claim that is not a self claim or an attestation is considered to be a badge. A badge is a statement made by one identity about another identity (but one that does not reference a self claim).
 - `issuer`
 - `subject`
 - `type`
@@ -32,19 +33,26 @@ This library is an "abstract" javascript class. (Abstract classes don't currentl
 
 Implementations (inherited classes) should define these methods. Javascript doesn't currently have the concept of private methods, but these methods are intended for internal use only (they are used by the public methods).
 
+#### \_signClaim
+- input:
+  - `hash`: hash of the claim (string)
+- returns: promise -> signature (string)
+
+#### \_isValidSignature
+- input:
+  - `hash`: hash of the claim (string)
+  - `signature`: signature of the hash (string)
+  - `issuer`: `id` of issuer (string)
+- returns: promise -> validity of claim (boolean)
+
 #### \_getClaims
 - input:
   - `subjectId`: `id` of subject (string)
-- returns: promise -> array of claims (json)
-
-#### \_isValid
-- input:
-  - `claim`: claim (json)
-- returns: promise -> validity of claim (boolean)
+- returns: promise -> array of claims (object)
 
 #### \_addClaim
 - input:
-  - `claim`: the claim object (json)
+  - `claim`: the claim object (object)
 - returns: promise -> success (boolean)
 
 ```javascript
@@ -54,14 +62,19 @@ class MyImplementation extends Claimtastic {
     // ...
   }
 
+  async _signClaim(hash) {
+    // ...
+    return signature
+  }
+
+  async _isValidSignature(hash, signature, issuer) {
+    // ...
+    return isValid
+  }
+
   async _getClaims(subjectId) {
     // ...
     return claims
-  }
-
-  async _validate(claim) {
-    // ...
-    return isValid
   }
 
   async _addClaim(claim) {
@@ -79,7 +92,27 @@ Retrieves all valid claims for a given subject identifier. To be considered vali
 
 - input:
   - `subjectId`: `id` of subject identity (string)
-- returns: promise -> array of claims (json)
+- returns: promise -> claims object (object)
+
+The returned claims object looks like this:
+
+```javascript
+{
+  badges: [
+    // "badge" claims,
+  ]
+  selfClaims: [
+    {
+      selfClaim: {
+        // actual claim object for the "self claim"
+      },
+      attestations: [
+        // "attestation" claims which reference the self claim
+      ]
+    }
+  ]
+}
+```
 
 ```javascript
 const myImplementation = new MyImplementation()
@@ -87,51 +120,18 @@ const myImplementation = new MyImplementation()
 const claims = await myImplementation.getClaims(subjectId)
 ```
 
-#### getSelfClaims
-
-Self claims are things that the identity says about itself. E.g. "This is my facebook profile" or "I'm a US citizen". A self claim is just a statement - not guaranteed to be true in any way.
-
-- input:
-  - `subjectId`: `id` of subject identity (string)
-- returns: promise -> array of claims (json)
-
-```javascript
-const myImplementation = new MyImplementation()
-
-const selfClaims = await myImplementation.getSelfClaims(subjectId)
-```
-
-#### getAttestations
-
-Attestations are claims by others about the validity of a self claim. E.g. "I have verified that this Facebook profile belongs to this person" or "I have verified that this person is a US citizen". An attestation references a self-claim; a self-claim can have multiple attestations (from different issuers).
-
-- input:
-  - `subjectId`: `id` of subject identity (string)
-  - `claimId`: `id` of self claim (string)
-- returns: promise -> array of claims (json)
-
-```javascript
-const myImplementation = new MyImplementation()
-
-const selfClaims = await myImplementation.getSelfClaims(subjectId)
-const someSelfClaim = selfClaims[0]
-
-const attestations = await myImplementation.getAttestations(subjectId, someSelfClaim.id)
-```
-
 #### addClaim
 
 Adds a claim to an identity. Only the subject identity should be authorized to do this.
 
 - input:
-  - `claim`: the claim object (json)
-- returns: promise -> success (boolean)
+  - `claim`: the claim object (object)
+- returns: promise -> claim id (string)
 
 ```javascript
 const myImplementation = new MyImplementation()
 
 const claim = {
-  id: 'http://example.gov/credentials/3732',
   type: ['Credential', 'ProofOfAgeCredential'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
@@ -141,7 +141,7 @@ const claim = {
   }
 }
 
-const claimAdded = await myImplementation.addClaim(claim)
+const claimId = await myImplementation.addClaim(claim)
 ```
 
 #### addSelfClaim
@@ -151,8 +151,8 @@ Convenience method for adding a self-claim to an identity. Only the subject iden
 - input:
   - `subjectId`: `id` of subject identity (string)
   - `claimType`: `type` of new self claim (string)
-  - `claimData`: data for new self claim (json)
-- returns: promise -> success (boolean)
+  - `claimData`: data for new self claim (object)
+- returns: promise -> claim id (string)
 
 ```javascript
 const myImplementation = new MyImplementation()
@@ -160,10 +160,10 @@ const myImplementation = new MyImplementation()
 const claimType = 'ProofOfAgeCredential'
 const claimData = { ageOver: 21 }
 
-const claimAdded = await myImplementation.addSelfClaim(subjectId, claimType, claimData)
+const claimId = await myImplementation.addSelfClaim(subjectId, claimType, claimData)
 ```
 
-#### addAttestation
+#### issueAttestation
 
 Convenience method for adding an attestation to an identity. Only the subject identity should be authorized to do this.
 
@@ -171,9 +171,7 @@ Convenience method for adding an attestation to an identity. Only the subject id
   - `subjectId`: `id` of subject identity (string)
   - `claimId`: `id` of self claim (string)
   - `issuerId`: `issuer` id of attestation (string)
-  - `issued`: `issued` date that attestation was made (string)
-  - `signature`: signed message of self claim (string)
-- returns: promise -> success (boolean)
+- returns: promise -> attestation claim (object)
 
 ```javascript
 const myImplementation = new MyImplementation()
@@ -181,10 +179,10 @@ const myImplementation = new MyImplementation()
 const subjectId = 'did:example:ebfeb1f712ebc6f1c276e12ec21'
 const claimId = 'http://example.gov/credentials/3732'
 const issuerId = 'https://dmv.example.gov'
-const issued = '2010-01-01'
-const signature = 'BavEll0/I1zpYw8XNi1bgVg/sCneO4Jugez8RwDg...'
 
-const attestationAdded = await myImplementation.addSelfClaim(subjectId, claimId, issuerId, issued, signature)
+const attestation = await myImplementation.issueAttestation(subjectId, claimId, issuerId)
+// This attestation claim can then be handed to the subject.
+// The subject can add it using `addClaim(attestation)`
 ```
 
 ### Schema
@@ -197,20 +195,18 @@ The purpose of defining a JSON schema in this framework is convenience. JSON sch
 
 To make claims interoperable, platform implementations should coordinate on `type`s. The table below should serve as a reference for currently standardized types. Anyone is welcome to make a pull request to update this table with new `type`s. The intention is for it to grow over time.
 
-`Type` is the integer representation of the `type`. `Name` is a human-friendly title for the `type`. And `description` should provide information about its purpose and usage.
+`Type` is the string representation of the type. `description` should provide information about its purpose and usage.
 
-To make things less confusing, it's probably best to attempt to group similar `type`s under ranges of integers. For example, the range 1000-1999 could perhaps be reserved for social media claims; 2000-2999 for government-issue claims; etc.
+I have kicked things off with `spirit animal`.
 
-I have kicked things off with `0`: `spirit animal`.
-
-| Type | Name | Description |
+| Type | Description |
 | --- | --- | --- |
-| 0 | spirit animal | this should be a self-claim, the value of which should be the identity's self-proclaimed spirit animal |
+| 'SpiritAnimal' | this should be a self-claim, the value of which should be the identity's self-proclaimed spirit animal |
 
 ### Implementations
 
 Anyone that builds an implementation on top of this library is welcome to make a PR to update this table.
 
-| Implementation | Name | Url |
-| --- | --- | --- |
-| | | |
+| Name | Url |
+| --- | --- |
+| TBD | https://github.com/tyleryasaka/identity-proposals/tree/master/claims-library-ethereum |

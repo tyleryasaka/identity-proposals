@@ -10,4 +10,10 @@ Architecture description coming. In the meantime, please enjoy this crude diagra
 
  ## Demo
 
+ Demo only works on Rinkeby right now.
+
+ https://eth-claims-demo.firebaseapp.com/
+
+ Or run locally:
+
  `npm run demo`
