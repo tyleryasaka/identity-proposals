@@ -1,41 +1,41 @@
 pragma solidity ^0.4.24;
 
-import "./ERCXXXX_Identity.sol";
+import "./ERC725.sol";
 
-contract Identity is ERCXXXX_Identity {
+contract Identity is ERC725 {
     event ContractCreation(address newContract);
 
     uint256 constant OPERATION_CALL = 0;
     uint256 constant OPERATION_DELEGATECALL = 1;
     uint256 constant OPERATION_CREATE = 2;
+    bytes32 constant DELEGATE_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
-    address private _owner;
+    mapping(bytes32 => address) delegates;
 
     constructor(address owner) public {
-        _owner = owner;
+        delegates[DELEGATE_OWNER] = owner;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == _owner);
+        require(msg.sender == delegates[DELEGATE_OWNER]);
         _;
     }
 
-    function owner() external view returns(address) {
-        return _owner;
+    function getDelegate(bytes32 _delegateType) external view returns (address _delegate) {
+        return delegates[_delegateType];
     }
 
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0));
-        _owner = newOwner;
+    function setDelegate(bytes32 _delegateType, address _delegate) external onlyOwner {
+        delegates[_delegateType] = _delegate;
     }
 
-    function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyOwner {
-        if (operationType == OPERATION_CALL)
-            executeCall(to, value, data);
-        else if (operationType == OPERATION_DELEGATECALL)
-            executeDelegateCall(to, data);
+    function execute(uint256 _operationType, address _to, uint256 _value, bytes _data) external onlyOwner {
+        if (_operationType == OPERATION_CALL)
+            executeCall(_to, _value, _data);
+        else if (_operationType == OPERATION_DELEGATECALL)
+            executeDelegateCall(_to, _data);
         else {
-            address newContract = executeCreate(data);
+            address newContract = executeCreate(_data);
             emit ContractCreation(newContract);
         }
     }
