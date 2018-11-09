@@ -200,7 +200,7 @@ To make claims interoperable, platform implementations should coordinate on `typ
 I have kicked things off with `spirit animal`.
 
 | Type | Description |
-| --- | --- | --- |
+| --- | --- |
 | 'SpiritAnimal' | this should be a self-claim, the value of which should be the identity's self-proclaimed spirit animal |
 
 ### Implementations

@@ -1,6 +1,6 @@
 # claimtastic-ethereum
 
-claimtastic-ethereum is an implementation of claimtastic.js on Ethereum.
+claimtastic-ethereum is an implementation of [claimtastic.js](https://github.com/tyleryasaka/identity-proposals/tree/master/claims-library) on Ethereum.
 
 ## Architecture
 
