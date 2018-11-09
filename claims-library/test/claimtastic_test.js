@@ -5,14 +5,16 @@ const subjectId_1 = 'did:example:1'
 const subjectId_2 = 'did:example:2'
 
 const invalidStructureClaim = {
-  id: 'http://example.gov/credentials/3732',
+  id: '851d7429e6fe4ce5eb94c741e83958fdd55b039e',
   claim: {
     id: subjectId_1
   },
-  amIValid: 'yes'
+  signature: {
+    signatureValue: 'valid-signature'
+  }
 }
 const invalidClaim = {
-  id: 'http://example.gov/credentials/3733',
+  id: 'e860de95458480c8b2a7484216bc1aca890ec139',
   type: ['Credential', 'ProofOfAgeCredential'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
@@ -20,10 +22,12 @@ const invalidClaim = {
     id: subjectId_1,
     ageOver: 21
   },
-  amIValid: 'no'
+  signature: {
+    signatureValue: 'invalid-signature'
+  }
 }
 const validClaim_1 = {
-  id: 'http://example.gov/credentials/3734',
+  id: 'e860de95458480c8b2a7484216bc1aca890ec139',
   type: ['Credential', 'ProofOfAgeCredential'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
@@ -31,10 +35,12 @@ const validClaim_1 = {
     id: subjectId_1,
     ageOver: 21
   },
-  amIValid: 'yes'
+  signature: {
+    signatureValue: 'valid-signature'
+  }
 }
 const validSelfClaim = {
-  id: 'http://example.gov/credentials/3735',
+  id: 'd9a8cc3ed051fc2acf7221f8aa1693cce2d0596d',
   type: ['Credential', 'SelfClaim', 'SpiritAnimal'],
   issuer: subjectId_1,
   issued: '2010-01-01',
@@ -42,48 +48,48 @@ const validSelfClaim = {
     id: subjectId_1,
     animal: 'northern bobwhite'
   },
-  amIValid: 'yes'
+  signature: {
+    signatureValue: 'valid-signature'
+  }
 }
 const validClaim_3 = {
-  id: 'http://example.gov/credentials/3736',
+  id: '7ee3d30476dfae9796af2f3659cca3c3a0ad2b48',
   type: ['Credential', 'ProofOfAgeCredential'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
   claim: {
     id: subjectId_2,
-    ageOver: 21
+    hello: 'world'
   },
-  amIValid: 'yes'
+  signature: {
+    signatureValue: 'valid-signature'
+  }
 }
 const validAttestation = {
-  id: 'http://example.gov/credentials/3737',
+  id: '2690ac41cedc91e9b862f058d624712be94659b6',
   type: ['Credential', 'Attestation'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
   claim: {
     id: subjectId_1,
-    verified: true
+    targetClaim: 'd9a8cc3ed051fc2acf7221f8aa1693cce2d0596d',
   },
-  targetClaim: 'http://example.gov/credentials/3735',
   signature: {
-    signatureValue: 'abc-123'
-  },
-  amIValid: 'yes'
+    signatureValue: 'valid-signature'
+  }
 }
 const otherAttestation = {
-  id: 'http://example.gov/credentials/3738',
+  id: '4e7a2d8e3ff3beb9af0c0a7cb587a0c59aafa347',
   type: ['Credential', 'Attestation'],
   issuer: 'https://dmv.example.gov',
   issued: '2010-01-01',
   claim: {
     id: subjectId_1,
-    verified: true
+    targetClaim: '7ee3d30476dfae9796af2f3659cca3c3a0ad2b48',
   },
-  targetClaim: 'http://example.gov/credentials/other-id',
   signature: {
-    signatureValue: 'abc-123'
-  },
-  amIValid: 'yes'
+    signatureValue: 'valid-signature'
+  }
 }
 
 class MyImplementation extends Claimtastic {
@@ -93,14 +99,16 @@ class MyImplementation extends Claimtastic {
     // do custom things
   }
 
-  async _isValid(claim) {
-    // example only. not a good validation method.
-    return Promise.resolve(claim.amIValid === 'yes')
+  async _signClaim(claimHash) {
+    return 'valid-signature'
+  }
+
+  async _isValidSignature(claimHash, signature, issuer) {
+    return Promise.resolve(signature === 'valid-signature')
   }
 
   async _getClaims(id) {
-    const claims = [invalidStructureClaim, validClaim_1, invalidClaim, validSelfClaim, validClaim_3, validAttestation, otherAttestation]
-    return Promise.resolve(claims.filter(claim => claim.claim.id === id))
+    return Promise.resolve(this.addedClaims.filter(c => c.claim.id === id))
   }
 
   async _addClaim(claim) {
@@ -117,63 +125,61 @@ describe('Claimtastic', function() {
       assert.throws(
         () => { new Claimtastic() },
         TypeError,
-        'The "Claimtastic" class is abstract. It cannot be instantiated without an "isValid" method.'
+        'The "Claimtastic" class is abstract. It cannot be instantiated without the "_signClaim" method.'
       )
     })
   })
 
   describe('getClaims', function() {
-    it('should use the isValid and getClaim methods to return valid claims', async function() {
+    it('should return valid claims', async function() {
       const myImplementation = new MyImplementation()
+      myImplementation.addedClaims = [validClaim_1]
+      const validClaims = await myImplementation.getClaims(subjectId_1)
+      const validBadgeIds = validClaims.badges.map(c => c.id)
+      const validSelfClaimIds = validClaims.selfClaims.map(c => c.selfClaim.id)
+
+      assert.include(validBadgeIds, validClaim_1.id)
+    })
+
+    it('should not return invalid claims', async function() {
+      const myImplementation = new MyImplementation()
+      myImplementation.addedClaims = [invalidStructureClaim, invalidClaim]
+      const validClaims = await myImplementation.getClaims(subjectId_1)
+      const validBadgeIds = validClaims.badges.map(c => c.id)
+
+      assert.notInclude(validBadgeIds, invalidStructureClaim.id)
+      assert.notInclude(validBadgeIds, invalidClaim.id)
+    })
+
+    it('should not return claims for other subjects', async function() {
+      const myImplementation = new MyImplementation()
+      myImplementation.addedClaims = [validClaim_3]
+      const validClaims = await myImplementation.getClaims(subjectId_1)
+      const validBadgeIds = validClaims.badges.map(c => c.id)
+
+      assert.notInclude(validBadgeIds, validClaim_3.id)
+    })
+
+    it('should recognize self claims', async function() {
+      const myImplementation = new MyImplementation()
+      myImplementation.addedClaims = [validSelfClaim]
+      const validClaims = await myImplementation.getClaims(subjectId_1)
+      const validSelfClaimIds = validClaims.selfClaims.map(c => c.selfClaim.id)
+
+      assert.include(validSelfClaimIds, validSelfClaim.id)
+    })
+
+    it('should recognize attestations', async function() {
+      const myImplementation = new MyImplementation()
+      myImplementation.addedClaims = [validSelfClaim, validAttestation, otherAttestation]
       const validClaims = await myImplementation.getClaims(subjectId_1)
 
-      // valid claims for id should be returned
-      assert.deepInclude(validClaims, validClaim_1)
-      assert.deepInclude(validClaims, validSelfClaim)
+      assert.equal(validClaims.selfClaims.length, 1)
+      const validAttestations = validClaims.selfClaims[0].attestations
+      const validAttestationIds = validAttestations.map(c => c.id)
 
-      // invalid schema should not be returned
-      assert.notDeepInclude(validClaims, invalidStructureClaim)
-
-      // invalid claim should not be returned
-      assert.notDeepInclude(validClaims, invalidClaim)
-
-      // claim for other id should not be returned
-      assert.notDeepInclude(validClaims, validClaim_3)
-    })
-  })
-
-  describe('getSelfClaims', function() {
-    it('should return valid self claims', async function() {
-      const myImplementation = new MyImplementation()
-      const selfClaims = await myImplementation.getSelfClaims(subjectId_1)
-
-      // valid claims for id should be returned
-      assert.deepInclude(selfClaims, validSelfClaim)
-
-      // non self claims should not be returned
-      assert.notDeepInclude(selfClaims, validClaim_1)
-      assert.notDeepInclude(selfClaims, invalidStructureClaim)
-      assert.notDeepInclude(selfClaims, invalidClaim)
-      assert.notDeepInclude(selfClaims, validClaim_3)
-      assert.notDeepInclude(selfClaims, validAttestation)
-    })
-  })
-
-  describe('getAttestations', function() {
-    it('should return valid attestations', async function() {
-      const myImplementation = new MyImplementation()
-      const attestations = await myImplementation.getAttestations(subjectId_1, 'http://example.gov/credentials/3735')
-
-      // valid claims for id should be returned
-      assert.deepInclude(attestations, validAttestation)
-
-      // non self claims should not be returned
-      assert.notDeepInclude(attestations, validClaim_1)
-      assert.notDeepInclude(attestations, invalidStructureClaim)
-      assert.notDeepInclude(attestations, invalidClaim)
-      assert.notDeepInclude(attestations, validClaim_3)
-      assert.notDeepInclude(attestations, validSelfClaim)
-      assert.notDeepInclude(attestations, otherAttestation)
+      assert.include(validAttestationIds, validAttestation.id)
+      assert.notInclude(validAttestationIds, otherAttestation.id)
     })
   })
 
@@ -181,7 +187,7 @@ describe('Claimtastic', function() {
     it('should return the result of the _addClaim method', async function() {
       const myImplementation = new MyImplementation()
       const result = await myImplementation.addClaim(validClaim_1)
-      assert.equal(result, true)
+      assert.equal(result, validClaim_1.id)
       assert.equal(myImplementation.addedClaims.length, 1)
       assert.deepEqual(myImplementation.addedClaims[0], validClaim_1)
     })
@@ -196,9 +202,10 @@ describe('Claimtastic', function() {
         animal: 'northern bobwhite'
       }
       const result = await myImplementation.addSelfClaim(subjectId_1, claimType, claimData)
-      assert.equal(result, true)
+      assert.ok(result)
       assert.equal(myImplementation.addedClaims.length, 1)
       assert.deepEqual(myImplementation.addedClaims[0], {
+        id: result,
         type: ['Credential', 'SelfClaim', 'SpiritAnimal'],
         issuer: subjectId_1,
         issued: `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`,
@@ -210,32 +217,28 @@ describe('Claimtastic', function() {
     })
   })
 
-  describe('addAttestation', function() {
-    it('should construct an attestation and return the result of the _addClaim method', async function() {
+  describe('issueAttestation', function() {
+    it('should construct an attestation', async function() {
       const subjectId = subjectId_1
-      const claimId = 'http://example.gov/credentials/3734'
       const issuerId = subjectId_2
-      const issued = '1999-12-31'
-      const signature = 'abc-123'
+      const signature = 'valid-signature'
       const myImplementation = new MyImplementation()
-      const result = await myImplementation.addAttestation(
+      await myImplementation.addClaim(validClaim_1)
+      const attestation = await myImplementation.issueAttestation(
         subjectId,
-        claimId,
-        issuerId,
-        issued,
-        signature
+        validClaim_1.id,
+        issuerId
       )
-      assert.equal(result, true)
-      assert.equal(myImplementation.addedClaims.length, 1)
-      assert.deepEqual(myImplementation.addedClaims[0], {
+      assert.ok(attestation)
+      const issued = attestation.issued
+      assert.deepEqual(attestation, {
         type: ['Credential', 'Attestation'],
         issuer: issuerId,
         issued: issued,
         claim: {
           id: subjectId,
-          verified: true
+          targetClaim: validClaim_1.id
         },
-        targetClaim: claimId,
         signature: {
           signatureValue: signature
         }
