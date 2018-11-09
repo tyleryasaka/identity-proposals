@@ -5,6 +5,13 @@ const hash = require('object-hash')
 const SELF_CLAIM_TYPE = 'SelfClaim'
 const ATTESTATION_TYPE = 'Attestation'
 
+const requiredMethods = [
+  '_signClaim',
+  '_isValidSignature',
+  '_getClaims',
+  '_addClaim'
+]
+
 function getToday() {
   const today = new Date()
   return `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
@@ -16,15 +23,11 @@ class Claimtastic {
     this._isValidStructure = ajv.compile(schema)
 
     // check that methods are implemented
-    if (this._isValidSignature === undefined) {
-      throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without an "_isValidSignature" method.')
-    }
-    if (this._getClaims === undefined) {
-      throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without a "_getClaims" method.')
-    }
-    if (this._addClaim === undefined) {
-      throw new TypeError('The "Claimtastic" class is abstract. It cannot be instantiated without an "_addClaim" method.')
-    }
+    requiredMethods.forEach(method => {
+      if (this[method] === undefined) {
+        throw new TypeError(`The "Claimtastic" class is abstract. It cannot be instantiated without the "${method}" method.`)
+      }
+    })
   }
 
   async getClaims(subjectId) {
@@ -40,18 +43,22 @@ class Claimtastic {
   }
 
   async addClaim(claim) {
-    claim.id = this._hashClaim(claim)
-    const success = await this._addClaim(claim)
-    return success
+    const _claim = Object.assign({}, claim)
+    _claim.id = this._hashClaim(_claim)
+    const success = await this._addClaim(_claim)
+    if (success) {
+      return _claim.id
+    }
   }
 
   async addSelfClaim(subjectId, claimType, claimData) {
-    claimData.id = subjectId
+    const _claimData = Object.assign({}, claimData)
+    _claimData.id = subjectId
     const claim = {
       type: ['Credential', 'SelfClaim', claimType],
       issuer: subjectId,
       issued: getToday(),
-      claim: claimData
+      claim: _claimData
     }
     const success = await this.addClaim(claim)
     return success
