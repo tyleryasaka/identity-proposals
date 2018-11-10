@@ -27,6 +27,7 @@ contract Identity is ERC725 {
 
     function setData(bytes32 _key, bytes32 _value) external onlyOwner {
         store[_key] = _value;
+        emit DataSet(_key, _value);
     }
 
     function execute(uint256 _operationType, address _to, uint256 _value, bytes _data) external onlyOwner {
