@@ -62,7 +62,7 @@ contract('Identity', function(accounts) {
 
     // Transfer identity ownership to the key manager
     const identityManager = await IdentityManager.new(identity.address, accounts[1], { from: accounts[1] })
-    await identity.setDelegate(DELEGATE_OWNER, identityManager.address)
+    await identity.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // Call counter.increment from identity, through identity manager
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -107,7 +107,7 @@ contract('Identity', function(accounts) {
       counter = await Counter.new()
       identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
       await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
-      await identityWithManager.setDelegate(DELEGATE_OWNER, identityManager.address)
+      await identityWithManager.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
       simpleToken = await SimpleToken.new()
       await simpleToken.transfer(accounts[1], 10)
@@ -208,7 +208,7 @@ contract('IdentityManager', function(accounts) {
     const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionRole = 2
-    await identity.setDelegate(DELEGATE_OWNER, identityManager.address)
+    await identity.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // add role
     await identityManager.addRole(accounts[1], actionRole)
@@ -248,7 +248,7 @@ contract('IdentityManager', function(accounts) {
     const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionRole = 2
-    await identity.setDelegate(DELEGATE_OWNER, identityManager.address)
+    await identity.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // add role
     await identityManager.addRole(accounts[1], actionRole)
@@ -291,7 +291,7 @@ contract('IdentityManager', function(accounts) {
     const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionRole = 2
-    await identity.setDelegate(DELEGATE_OWNER, identityManager.address)
+    await identity.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // add role, signed with invalid expiry
     let nonceKey = web3.utils.soliditySha3("addRoleSigned", accounts[1], actionRole)
@@ -407,7 +407,7 @@ contract('MetaWallet', function(accounts) {
     const counter = await Counter.new()
     const identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
     await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
-    await identityWithManager.setDelegate(DELEGATE_OWNER, identityManager.address)
+    await identityWithManager.setDelegate(DELEGATE_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     const simpleToken = await SimpleToken.new()
     await simpleToken.transfer(accounts[1], 10)

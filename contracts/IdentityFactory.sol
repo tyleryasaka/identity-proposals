@@ -14,7 +14,7 @@ contract IdentityFactory {
         identityManager.addRole(metaWallet, 2);
         identityManager.addRole(msg.sender, 1);
         identityManager.removeRole(address(this));
-        identity.setDelegate(DELEGATE_OWNER, address(identityManager));
+        identity.setDelegate(DELEGATE_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
 
@@ -23,14 +23,14 @@ contract IdentityFactory {
         IdentityManager identityManager = new IdentityManager(identity, address(this));
         identityManager.addRole(msg.sender, 1);
         identityManager.removeRole(address(this));
-        identity.setDelegate(DELEGATE_OWNER, address(identityManager));
+        identity.setDelegate(DELEGATE_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
 
     function createIdentityWithExecution(uint256 operationType, address to, uint256 value, bytes data) public {
         Identity identity = new Identity(address(this));
         identity.execute(operationType, to, value, data);
-        identity.setDelegate(DELEGATE_OWNER, msg.sender);
+        identity.setDelegate(DELEGATE_OWNER, bytes32(msg.sender));
         emit CreatedIdentityWithManager(address(identity), msg.sender);
     }
 }
