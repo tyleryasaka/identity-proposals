@@ -8,25 +8,25 @@ contract Identity is ERC725 {
     uint256 constant OPERATION_CALL = 0;
     uint256 constant OPERATION_DELEGATECALL = 1;
     uint256 constant OPERATION_CREATE = 2;
-    bytes32 constant DELEGATE_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    bytes32 constant KEY_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
-    mapping(bytes32 => bytes32) delegates;
+    mapping(bytes32 => bytes32) store;
 
     constructor(address owner) public {
-        delegates[DELEGATE_OWNER] = bytes32(owner);
+        store[KEY_OWNER] = bytes32(owner);
     }
 
     modifier onlyOwner() {
-        require(msg.sender == address(delegates[DELEGATE_OWNER]));
+        require(msg.sender == address(store[KEY_OWNER]));
         _;
     }
 
-    function getDelegate(bytes32 _delegateType) external view returns (bytes32 _delegate) {
-        return delegates[_delegateType];
+    function getData(bytes32 _key) external view returns (bytes32 _value) {
+        return store[_key];
     }
 
-    function setDelegate(bytes32 _delegateType, bytes32 _delegate) external onlyOwner {
-        delegates[_delegateType] = _delegate;
+    function setData(bytes32 _key, bytes32 _value) external onlyOwner {
+        store[_key] = _value;
     }
 
     function execute(uint256 _operationType, address _to, uint256 _value, bytes _data) external onlyOwner {

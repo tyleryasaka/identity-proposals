@@ -6,7 +6,7 @@ import "./IdentityManager.sol";
 contract IdentityFactory {
     event CreatedIdentityWithManager(address identity, address manager);
 
-    bytes32 constant DELEGATE_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    bytes32 constant KEY_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
     function createIdentityWithMetaWallet(address metaWallet) public {
         Identity identity = new Identity(address(this));
@@ -14,7 +14,7 @@ contract IdentityFactory {
         identityManager.addRole(metaWallet, 2);
         identityManager.addRole(msg.sender, 1);
         identityManager.removeRole(address(this));
-        identity.setDelegate(DELEGATE_OWNER, bytes32(address(identityManager)));
+        identity.setData(KEY_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
 
@@ -23,14 +23,14 @@ contract IdentityFactory {
         IdentityManager identityManager = new IdentityManager(identity, address(this));
         identityManager.addRole(msg.sender, 1);
         identityManager.removeRole(address(this));
-        identity.setDelegate(DELEGATE_OWNER, bytes32(address(identityManager)));
+        identity.setData(KEY_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
 
     function createIdentityWithExecution(uint256 operationType, address to, uint256 value, bytes data) public {
         Identity identity = new Identity(address(this));
         identity.execute(operationType, to, value, data);
-        identity.setDelegate(DELEGATE_OWNER, bytes32(msg.sender));
+        identity.setData(KEY_OWNER, bytes32(msg.sender));
         emit CreatedIdentityWithManager(address(identity), msg.sender);
     }
 }
