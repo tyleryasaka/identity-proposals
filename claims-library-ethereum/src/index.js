@@ -19,7 +19,8 @@ const REGISTRY_ADDRESS_RINKEBY = '0xeD06550D5Ab30b6851AB9b16CC31fe301cFEdfe0'
 class ClaimtasticEthereum extends Claimtastic {
   constructor({ web3Provider }) {
     super()
-    this.web3 = new Web3(web3Provider || Web3.givenProvider)
+    this.web3Provider = web3Provider || Web3.givenProvider
+    this.web3 = new Web3(this.web3Provider)
   }
 
   /*
@@ -160,7 +161,7 @@ class ClaimtasticEthereum extends Claimtastic {
 
   async _getProfile(walletAddress) {
     try {
-      return await Box.getProfile(walletAddress)
+      return await Box.getProfile(walletAddress, this.web3Provider)
     } catch(e) {
       if (JSON.parse(e).message === 'address not linked') {
         return null
