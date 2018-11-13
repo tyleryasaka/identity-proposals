@@ -69,12 +69,12 @@ contract IdentityManager is ERC734 {
         return (_roles[key] != EMPTY_ROLE) && (_roles[key] <= role);
     }
 
-    function getKey(address key) external view returns(uint256) {
-        return _roles[key];
+    function getKey(bytes32 key) external view returns(uint256) {
+        return _roles[address(key)];
     }
 
-    function addKey(address key, uint256 role) external onlyManagement {
-        _roles[key] = role;
+    function addKey(bytes32 key, uint256 role) external onlyManagement {
+        _roles[address(key)] = role;
         emit KeyAdded(key, role);
     }
 
@@ -85,11 +85,11 @@ contract IdentityManager is ERC734 {
         require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
         _roles[key] = role;
-        emit KeyAdded(key, role);
+        emit KeyAdded(bytes32(key), role);
     }
 
-    function removeKey(address key) external onlyManagement {
-        _roles[key] = EMPTY_ROLE;
+    function removeKey(bytes32 key) external onlyManagement {
+        _roles[address(key)] = EMPTY_ROLE;
         emit KeyRemoved(key);
     }
 
@@ -100,7 +100,7 @@ contract IdentityManager is ERC734 {
         require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
         _roles[key] = EMPTY_ROLE;
-        emit KeyRemoved(key);
+        emit KeyRemoved(bytes32(key));
     }
 
     function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyAction {

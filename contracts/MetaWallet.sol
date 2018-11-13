@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "./ERC734.sol";
+import "./IdentityManager.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract MetaWallet {
@@ -29,8 +29,8 @@ contract MetaWallet {
         }
         if (v < 27) v += 27;
         address recovered = ecrecover(keccak256(PREFIX, signatureData), v, r, s);
-        ERC734 _identityManager = ERC734(identityManager);
-        return _identityManager.getKey(recovered) <= level;
+        IdentityManager _identityManager = IdentityManager(identityManager);
+        return _identityManager.getKey(bytes32(recovered)) <= level;
     }
 
     function balanceOf(address token, address tokenOwner) external view returns(uint256) {
@@ -55,7 +55,7 @@ contract MetaWallet {
         bytes32 signatureData = keccak256(address(this), "execute", to, value, data, expiry, identityManager, token, tokenTransfer, _nonce[nonceKey]);
         _checkExpiry(expiry);
         require(_validateSignatures(identityManager, ACTION_ROLE, signatures, signatureData));
-        ERC734 _identityManager = ERC734(identityManager);
+        IdentityManager _identityManager = IdentityManager(identityManager);
         _nonce[nonceKey]++;
         _identityManager.execute(OPERATION_CALL, to, value, data);
         require(_balances[token][identityManager] >= tokenTransfer);

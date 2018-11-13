@@ -105,7 +105,7 @@ contract('Identity', function(accounts) {
       metaWallet = await MetaWallet.new()
       counter = await Counter.new()
       identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-      await identityManager.addKey(metaWallet.address, 2, { from: accounts[1] })
+      await identityManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
       await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
       simpleToken = await SimpleToken.new()
@@ -166,10 +166,10 @@ contract('IdentityManager', function(accounts) {
     const emptyRole = 0
 
     // add key
-    await identityManager.addKey(accounts[1], actionRole)
+    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionRole)
 
     // check that key was added
-    let role = await identityManager.getKey(accounts[1])
+    let role = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(role, actionRole)
 
     // add key, signed
@@ -180,14 +180,14 @@ contract('IdentityManager', function(accounts) {
     await identityManager.addKeySigned(accounts[2], actionRole, expiry, signature, { from: accounts[3] })
 
     // check that key was added
-    role = await identityManager.getKey(accounts[2])
+    role = await identityManager.getKey(web3.utils.padLeft(accounts[2], 64))
     assert.equal(role, actionRole)
 
     // remove key
-    await identityManager.removeKey(accounts[1])
+    await identityManager.removeKey(web3.utils.padLeft(accounts[1], 64))
 
     // check that key was removed
-    role = await identityManager.getKey(accounts[1])
+    role = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(role, emptyRole)
 
     // remove key, signed
@@ -198,7 +198,7 @@ contract('IdentityManager', function(accounts) {
     await identityManager.removeKeySigned(accounts[2], expiry, signature, { from: accounts[3] })
 
     // check that key was removed
-    role = await identityManager.getKey(accounts[2])
+    role = await identityManager.getKey(web3.utils.padLeft(accounts[2], 64))
     assert.equal(role, emptyRole)
   })
 
@@ -210,7 +210,7 @@ contract('IdentityManager', function(accounts) {
     await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // add key
-    await identityManager.addKey(accounts[1], actionRole)
+    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionRole)
 
     // execute counter
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -225,7 +225,7 @@ contract('IdentityManager', function(accounts) {
     assert.equal((await counter.get()).toString(), '2')
 
     // remove key
-    await identityManager.removeKey(accounts[1])
+    await identityManager.removeKey(web3.utils.padLeft(accounts[1], 64))
 
     // execute counter should fail
     await assertVMExecption(async () => {
@@ -250,7 +250,7 @@ contract('IdentityManager', function(accounts) {
     await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     // add key
-    await identityManager.addKey(accounts[1], actionRole)
+    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionRole)
 
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -330,14 +330,14 @@ contract('IdentityManager', function(accounts) {
     await assertVMExecption(async () => {
       await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
     })
-    let role = await identityManager.getKey(accounts[1])
+    let role = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(role, actionRole)
 
     // add key, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
     signature = await sign([identityManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
     await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
-    role = await identityManager.getKey(accounts[1])
+    role = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(role, 0)
   })
 })
@@ -405,7 +405,7 @@ contract('MetaWallet', function(accounts) {
     const metaWallet = await MetaWallet.new()
     const counter = await Counter.new()
     const identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-    await identityManager.addKey(metaWallet.address, 2, { from: accounts[1] })
+    await identityManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
     await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     const simpleToken = await SimpleToken.new()
