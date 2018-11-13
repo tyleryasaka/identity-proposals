@@ -32,7 +32,7 @@
     "webpack-dev-server": "^3.1.10"
   },
   "dependencies": {
-    "3box": "git+https://github.com/tyleryasaka/3box-js.git#no-address-server",
+    "3box": "tyleryasaka/3box-js#no-address-server",
     "cryptiles": ">=4.1.2"
   }
 }
