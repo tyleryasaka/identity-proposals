@@ -69,6 +69,10 @@ contract IdentityManager is ERC734 {
         return (_roles[key] != EMPTY_ROLE) && (_roles[key] <= role);
     }
 
+    function keyHasRole(bytes32 key, uint256 role) external view returns(bool) {
+        return _keyHasRole(address(key), role);
+    }
+
     function getKey(bytes32 key) external view returns(uint256) {
         return _roles[address(key)];
     }
@@ -103,8 +107,9 @@ contract IdentityManager is ERC734 {
         emit KeyRemoved(bytes32(key));
     }
 
-    function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyAction {
+    function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyAction returns (uint256) {
         _identity.execute(operationType, to, value, data);
+        return 0;
     }
 
     function executeSigned(uint256 operationType, address to, uint256 value, bytes data, uint256 expiry, bytes signatures) external {
@@ -114,6 +119,10 @@ contract IdentityManager is ERC734 {
         require(_validateSignatures(ACTION_ROLE, signatures, signatureData), "Must have valid action signatures");
         _nonce[nonceKey]++;
         _identity.execute(operationType, to, value, data);
+    }
+
+    function approve(uint256 id, bool approve) external {
+        emit Approved(id, approve);
     }
 
     function getNonce(bytes32 nonceKey) external view returns (uint256) {
