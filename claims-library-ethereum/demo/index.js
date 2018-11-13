@@ -2,6 +2,7 @@ const html = require('choo/html')
 const devtools = require('choo-devtools')
 const choo = require('choo')
 const ClaimtasticEthereum = require('../src/index')
+const Box = require('3box')
 require('../node_modules/tachyons/css/tachyons.min.css')
 require('file-loader?name=[name].[ext]!../index.html')
 
@@ -9,6 +10,7 @@ const app = choo()
 app.use(devtools())
 app.use(store)
 app.route('/', mainView)
+app.route('/wallet/:wallet', mainView)
 app.mount('body')
 
 function mainView (state, emit) {
@@ -25,7 +27,8 @@ function mainView (state, emit) {
   const spiritAnimalClaim = selfClaims.length && selfClaims.find(c => c.selfClaim.type.includes('SpiritAnimal'))
   const inputSpiritAnimalValue = spiritAnimalClaim ? spiritAnimalClaim.selfClaim.claim.animal : inputSpiritAnimal
   const hasSpiritAnimal = Boolean(spiritAnimalClaim)
-  const spiritAnimalDisabled = hasSpiritAnimal ? 'disabled' : null
+  const canEdit = !state.params.wallet
+  const spiritAnimalDisabled = (hasSpiritAnimal || !canEdit) ? 'disabled' : null
   const _name = name ? name : 'Anonymous'
   const src = image ? `https://ipfs.infura.io/ipfs/${image.contentUrl['/']}` : 'http://tachyons.io/img/logo.jpg'
   const loadingSpinner = html`
@@ -44,7 +47,13 @@ function mainView (state, emit) {
         ` : html `
           <button class="b ph3 pv2 ba b--black bg-transparent grow pointer f6" onclick=${createIdentity}>Create ERC725 identity</button>
         `}
-        <h3><a target="_blank" href="https://alpha.3box.io" class="f5 fw6 db blue no-underline underline-hover">Edit 3Box profile</a></h3>
+        ${canEdit ? html`
+          <div>
+            <h3><a target="_blank" href="https://alpha.3box.io" class="f5 fw6 db blue no-underline underline-hover">Edit 3Box profile</a></h3>
+            <h3><a target="_blank" href="https://eth-claims-demo.firebaseapp.com#wallet/${state.myWallet}" class="f5 fw6 db blue no-underline underline-hover">My public profile link</a></h3>
+          </div>
+        ` : null }
+
       </header>
       ${did ? html`
         <section class="mw5 mw7-ns center bg-light-gray pa3 ph5-ns">
@@ -56,10 +65,10 @@ function mainView (state, emit) {
                 <input class="pa2 input-reset ba bg-transparent w-100 measure" type="text" name="spirit-animal" onchange=${updateSpiritAnimal} value=${inputSpiritAnimalValue} ${spiritAnimalDisabled}>
               </div>
             </fieldset>
-            ${!hasSpiritAnimal ? html`
+            ${(canEdit && !hasSpiritAnimal) ? html`
               <div class="mt3"><button class="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6" onclick=${addSpiritAnimal}>Claim my spirit animal</button></div>
             ` : null}
-            ${hasSpiritAnimal ? html`
+            ${(canEdit && hasSpiritAnimal) ? html`
               <div class="mt3"><button class="b ph3 pv2 input-reset ba b--black bg-transparent grow pointer f6" onclick=${removeSpiritAnimal}>Remove this claim</button></div>
             ` : null}
           </article>
@@ -119,7 +128,8 @@ function store (state, emitter) {
       alert('Please use a web3-enabled browser')
       return
     }
-    window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3Provider: (window.ethereum || window.web3.currentProvider) })
+    state.web3Provider = window.ethereum || window.web3.currentProvider
+    window.claimtastic = state.claimtasticEthereum = new ClaimtasticEthereum({ web3Provider: state.web3Provider })
     const web3 = state.claimtasticEthereum.web3
     const id = await web3.eth.net.getId()
     if (id !== 4) {
@@ -131,6 +141,7 @@ function store (state, emitter) {
       alert('Please enable your web3 browser by logging in')
       return
     }
+    state.myWallet = accounts[0]
     emitter.emit('render')
     emitter.emit('unlock')
   })
@@ -146,7 +157,9 @@ function store (state, emitter) {
   })
 
   emitter.on('unlock', async function() {
-    await state.claimtasticEthereum.unlock()
+    if (!state.params.wallet) {
+      await state.claimtasticEthereum.unlock()
+    }
     emitter.emit('loadClaims')
   })
 
@@ -164,12 +177,14 @@ function store (state, emitter) {
 
   emitter.on('loadClaims', async function () {
     emitter.emit('startLoading')
-    const _did = state.did || await state.claimtasticEthereum.getIdentity()
+    const wallet = state.params.wallet
+    const _did = state.did || await state.claimtasticEthereum.getIdentity(wallet)
     state.did = _did
     const obj = await state.claimtasticEthereum.getClaims(_did)
-    state.name = await state.claimtasticEthereum.box.public.get('name')
-    const images = await state.claimtasticEthereum.box.public.get('image')
-    state.image = (images && images.length) ? images[0] : null
+    console.log('web3 provider', state.web3web3Provider)
+    const profile = await Box.getProfile(wallet || state.myWallet, state.web3Provider)
+    state.name = profile.name
+    state.image = (profile.images && profile.images.length) ? profile.images[0] : null
     state.selfClaims = obj.selfClaims
     emitter.emit('endLoading')
   })
