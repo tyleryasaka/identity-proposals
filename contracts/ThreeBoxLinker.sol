@@ -1,7 +1,5 @@
 pragma solidity ^0.4.24;
 
-import "./ERCXXXX_Identity.sol";
-
 contract ThreeBoxLinker {
     event LinkCreated(address identity, address threeBox);
 

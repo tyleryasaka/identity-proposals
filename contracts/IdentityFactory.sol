@@ -11,9 +11,9 @@ contract IdentityFactory {
     function createIdentityWithMetaWallet(address metaWallet) public {
         Identity identity = new Identity(address(this));
         IdentityManager identityManager = new IdentityManager(identity, address(this));
-        identityManager.addRole(metaWallet, 2);
-        identityManager.addRole(msg.sender, 1);
-        identityManager.removeRole(address(this));
+        identityManager.addKey(metaWallet, 2);
+        identityManager.addKey(msg.sender, 1);
+        identityManager.removeKey(address(this));
         identity.setData(KEY_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }
@@ -21,8 +21,8 @@ contract IdentityFactory {
     function createIdentityWithManager() public {
         Identity identity = new Identity(address(this));
         IdentityManager identityManager = new IdentityManager(identity, address(this));
-        identityManager.addRole(msg.sender, 1);
-        identityManager.removeRole(address(this));
+        identityManager.addKey(msg.sender, 1);
+        identityManager.removeKey(address(this));
         identity.setData(KEY_OWNER, bytes32(address(identityManager)));
         emit CreatedIdentityWithManager(address(identity), address(identityManager));
     }

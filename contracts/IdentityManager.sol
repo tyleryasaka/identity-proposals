@@ -1,10 +1,11 @@
 pragma solidity ^0.4.24;
 
-import "./ERCXXXX_Identity.sol";
+import "./ERC725.sol";
+import "./ERC734.sol";
 
 /* This is a *very* poorly implemented key management contract. It is for demonstration purposes only. */
 
-contract IdentityManager is ERCXXXX_IdentityManager {
+contract IdentityManager is ERC734 {
     uint256 constant EMPTY_ROLE = 0;
     uint256 constant MANAGEMENT_ROLE = 1;
     uint256 constant ACTION_ROLE = 2;
@@ -18,32 +19,32 @@ contract IdentityManager is ERCXXXX_IdentityManager {
 
     mapping(address => uint256) private _roles;
     mapping(bytes32 => uint256) private _nonce;
-    ERCXXXX_Identity private _identity;
+    ERC725 private _identity;
 
     modifier onlyManagement() {
-      require(_hasRole(msg.sender, MANAGEMENT_ROLE), "Must have manager role");
+      require(_keyHasRole(msg.sender, MANAGEMENT_ROLE), "Must have manager role");
       _;
     }
 
     modifier onlyAction() {
-      require(_hasRole(msg.sender, ACTION_ROLE), "Must have action role");
+      require(_keyHasRole(msg.sender, ACTION_ROLE), "Must have action role");
       _;
     }
 
     constructor (address identity, address manager) public {
-        _identity = ERCXXXX_Identity(identity);
+        _identity = ERC725(identity);
         _roles[manager] = MANAGEMENT_ROLE;
     }
 
-    function _requiredSignatures(uint256 level) internal view returns (uint) {
-        if (level == 1) {
+    function _requiredSignatures(uint256 key) internal view returns (uint) {
+        if (key == 1) {
             return MANAGEMENT_SIGS;
-        } else if (level == 2) {
+        } else if (key == 2) {
             return ACTION_SIGS;
         }
     }
 
-    function _validateSignatures(uint256 level, bytes signature, bytes32 signatureData) internal view returns (bool) {
+    function _validateSignatures(uint256 key, bytes signature, bytes32 signatureData) internal view returns (bool) {
         bytes32 r;
         bytes32 s;
         uint8 v;
@@ -54,7 +55,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         }
         if (v < 27) v += 27;
         address recovered = ecrecover(keccak256(PREFIX, signatureData), v, r, s);
-        return _hasRole(recovered, level);
+        return _keyHasRole(recovered, key);
     }
 
     function _checkExpiry(uint256 expiry) internal view returns (bool) {
@@ -64,42 +65,42 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         return true;
     }
 
-    function hasRole(address actor, uint256 level) external view returns(bool) {
-        return _hasRole(actor, level);
+    function _keyHasRole(address key, uint256 role) private view returns(bool) {
+        return (_roles[key] != EMPTY_ROLE) && (_roles[key] <= role);
     }
 
-    function _hasRole(address actor, uint256 level) private view returns(bool) {
-        return (_roles[actor] != EMPTY_ROLE) && (_roles[actor] <= level);
+    function getKey(address key) external view returns(uint256) {
+        return _roles[key];
     }
 
-    function addRole(address actor, uint256 level) external onlyManagement {
-        _roles[actor] = level;
-        emit RoleAdded(actor, level);
+    function addKey(address key, uint256 role) external onlyManagement {
+        _roles[key] = role;
+        emit KeyAdded(key, role);
     }
 
-    function addRoleSigned(address actor, uint256 level, uint256 expiry, bytes signatures) external {
-        bytes32 nonceKey = keccak256("addRoleSigned", actor, level);
-        bytes32 signatureData = keccak256(address(this), "addRoleSigned", actor, level, _nonce[nonceKey], expiry);
+    function addKeySigned(address key, uint256 role, uint256 expiry, bytes signatures) external {
+        bytes32 nonceKey = keccak256("addKeySigned", key, role);
+        bytes32 signatureData = keccak256(address(this), "addKeySigned", key, role, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
         require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
-        _roles[actor] = level;
-        emit RoleAdded(actor, level);
+        _roles[key] = role;
+        emit KeyAdded(key, role);
     }
 
-    function removeRole(address actor) external onlyManagement {
-        _roles[actor] = EMPTY_ROLE;
-        emit RoleRemoved(actor);
+    function removeKey(address key) external onlyManagement {
+        _roles[key] = EMPTY_ROLE;
+        emit KeyRemoved(key);
     }
 
-    function removeRoleSigned(address actor, uint256 expiry, bytes signatures) external {
-        bytes32 nonceKey = keccak256("removeRoleSigned", actor);
-        bytes32 signatureData = keccak256(address(this), "removeRoleSigned", actor, _nonce[nonceKey], expiry);
+    function removeKeySigned(address key, uint256 expiry, bytes signatures) external {
+        bytes32 nonceKey = keccak256("removeKeySigned", key);
+        bytes32 signatureData = keccak256(address(this), "removeKeySigned", key, _nonce[nonceKey], expiry);
         _checkExpiry(expiry);
         require(_validateSignatures(MANAGEMENT_ROLE, signatures, signatureData), "Must have valid management signatures");
         _nonce[nonceKey]++;
-        _roles[actor] = EMPTY_ROLE;
-        emit RoleRemoved(actor);
+        _roles[key] = EMPTY_ROLE;
+        emit KeyRemoved(key);
     }
 
     function execute(uint256 operationType, address to, uint256 value, bytes data) external onlyAction {
@@ -119,7 +120,7 @@ contract IdentityManager is ERCXXXX_IdentityManager {
         return _nonce[nonceKey];
     }
 
-    function getRequiredSignatures(uint256 level) external view returns (uint) {
-        return _requiredSignatures(level);
+    function getRequiredSignatures(uint256 key) external view returns (uint) {
+        return _requiredSignatures(key);
     }
 }

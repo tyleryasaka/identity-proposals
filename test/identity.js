@@ -105,7 +105,7 @@ contract('Identity', function(accounts) {
       metaWallet = await MetaWallet.new()
       counter = await Counter.new()
       identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-      await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
+      await identityManager.addKey(metaWallet.address, 2, { from: accounts[1] })
       await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
       simpleToken = await SimpleToken.new()
@@ -159,47 +159,47 @@ contract('Identity', function(accounts) {
 })
 
 contract('IdentityManager', function(accounts) {
-  it('should be able to add and remove roles', async function() {
+  it('should be able to add and remove keys', async function() {
     const identity = await Identity.new(accounts[0])
     const identityManager = await IdentityManager.new(identity.address, accounts[0])
     const actionRole = 2
     const emptyRole = 0
 
-    // add role
-    await identityManager.addRole(accounts[1], actionRole)
+    // add key
+    await identityManager.addKey(accounts[1], actionRole)
 
-    // check that role was added
-    let hasRole = await identityManager.hasRole(accounts[1], actionRole)
-    assert.equal(hasRole, true)
+    // check that key was added
+    let role = await identityManager.getKey(accounts[1])
+    assert.equal(role, actionRole)
 
-    // add role, signed
-    let nonceKey = web3.utils.soliditySha3("addRoleSigned", accounts[2], actionRole)
+    // add key, signed
+    let nonceKey = web3.utils.soliditySha3("addKeySigned", accounts[2], actionRole)
     let nonce = Number(await identityManager.getNonce(nonceKey))
     let expiry = Math.floor( Date.now() / 1000 ) + 100
-    let signature = await sign([identityManager.address, "addRoleSigned", accounts[2], actionRole, nonce, expiry], accounts[0])
-    await identityManager.addRoleSigned(accounts[2], actionRole, expiry, signature, { from: accounts[3] })
+    let signature = await sign([identityManager.address, "addKeySigned", accounts[2], actionRole, nonce, expiry], accounts[0])
+    await identityManager.addKeySigned(accounts[2], actionRole, expiry, signature, { from: accounts[3] })
 
-    // check that role was added
-    hasRole = await identityManager.hasRole(accounts[2], actionRole)
-    assert.equal(hasRole, true)
+    // check that key was added
+    role = await identityManager.getKey(accounts[2])
+    assert.equal(role, actionRole)
 
-    // remove role
-    await identityManager.removeRole(accounts[1])
+    // remove key
+    await identityManager.removeKey(accounts[1])
 
-    // check that role was removed
-    hasRole = await identityManager.hasRole(accounts[1], actionRole)
-    assert.equal(hasRole, false)
+    // check that key was removed
+    role = await identityManager.getKey(accounts[1])
+    assert.equal(role, emptyRole)
 
-    // remove role, signed
-    nonceKey = web3.utils.soliditySha3("removeRoleSigned", accounts[2])
+    // remove key, signed
+    nonceKey = web3.utils.soliditySha3("removeKeySigned", accounts[2])
     nonce = Number(await identityManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "removeRoleSigned", accounts[2], nonce, expiry], accounts[0])
-    await identityManager.removeRoleSigned(accounts[2], expiry, signature, { from: accounts[3] })
+    signature = await sign([identityManager.address, "removeKeySigned", accounts[2], nonce, expiry], accounts[0])
+    await identityManager.removeKeySigned(accounts[2], expiry, signature, { from: accounts[3] })
 
-    // check that role was removed
-    hasRole = await identityManager.hasRole(accounts[2], actionRole)
-    assert.equal(hasRole, false)
+    // check that key was removed
+    role = await identityManager.getKey(accounts[2])
+    assert.equal(role, emptyRole)
   })
 
   it('should allow execution for action roles', async function() {
@@ -209,8 +209,8 @@ contract('IdentityManager', function(accounts) {
     const actionRole = 2
     await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
-    // add role
-    await identityManager.addRole(accounts[1], actionRole)
+    // add key
+    await identityManager.addKey(accounts[1], actionRole)
 
     // execute counter
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -224,8 +224,8 @@ contract('IdentityManager', function(accounts) {
     await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
-    // remove role
-    await identityManager.removeRole(accounts[1])
+    // remove key
+    await identityManager.removeKey(accounts[1])
 
     // execute counter should fail
     await assertVMExecption(async () => {
@@ -249,8 +249,8 @@ contract('IdentityManager', function(accounts) {
     const actionRole = 2
     await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
-    // add role
-    await identityManager.addRole(accounts[1], actionRole)
+    // add key
+    await identityManager.addKey(accounts[1], actionRole)
 
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -292,19 +292,19 @@ contract('IdentityManager', function(accounts) {
     const actionRole = 2
     await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
-    // add role, signed with invalid expiry
-    let nonceKey = web3.utils.soliditySha3("addRoleSigned", accounts[1], actionRole)
+    // add key, signed with invalid expiry
+    let nonceKey = web3.utils.soliditySha3("addKeySigned", accounts[1], actionRole)
     let nonce = Number(await identityManager.getNonce(nonceKey))
     let expiry = Math.floor( Date.now() / 1000 ) - 100
-    let signature = await sign([identityManager.address, "addRoleSigned", accounts[1], actionRole, nonce, expiry], accounts[0])
+    let signature = await sign([identityManager.address, "addKeySigned", accounts[1], actionRole, nonce, expiry], accounts[0])
     await assertVMExecption(async () => {
-      await identityManager.addRoleSigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
+      await identityManager.addKeySigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
     })
 
-    // add role, signed with valid expiry
+    // add key, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "addRoleSigned", accounts[1], actionRole, nonce, expiry], accounts[0])
-    await identityManager.addRoleSigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
+    signature = await sign([identityManager.address, "addKeySigned", accounts[1], actionRole, nonce, expiry], accounts[0])
+    await identityManager.addKeySigned(accounts[1], actionRole, expiry, signature, { from: accounts[3] })
 
     // execute counter, signed with invalid expiry
     const encodedCall = getEncodedCall(web3, counter, 'increment')
@@ -322,23 +322,23 @@ contract('IdentityManager', function(accounts) {
     await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
-    // remove role, signed with invalid expiry
-    nonceKey = web3.utils.soliditySha3("removeRoleSigned", accounts[1])
+    // remove key, signed with invalid expiry
+    nonceKey = web3.utils.soliditySha3("removeKeySigned", accounts[1])
     nonce = Number(await identityManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
-    signature = await sign([identityManager.address, "removeRoleSigned", accounts[1], nonce, expiry], accounts[0])
+    signature = await sign([identityManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
     await assertVMExecption(async () => {
-      await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
+      await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
     })
-    let hasRole = await identityManager.hasRole(accounts[1], actionRole)
-    assert.equal(hasRole, true)
+    let role = await identityManager.getKey(accounts[1])
+    assert.equal(role, actionRole)
 
-    // add role, signed with valid expiry
+    // add key, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "removeRoleSigned", accounts[1], nonce, expiry], accounts[0])
-    await identityManager.removeRoleSigned(accounts[1], expiry, signature, { from: accounts[3] })
-    hasRole = await identityManager.hasRole(accounts[1], actionRole)
-    assert.equal(hasRole, false)
+    signature = await sign([identityManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
+    await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
+    role = await identityManager.getKey(accounts[1])
+    assert.equal(role, 0)
   })
 })
 
@@ -405,7 +405,7 @@ contract('MetaWallet', function(accounts) {
     const metaWallet = await MetaWallet.new()
     const counter = await Counter.new()
     const identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-    await identityManager.addRole(metaWallet.address, 2, { from: accounts[1] })
+    await identityManager.addKey(metaWallet.address, 2, { from: accounts[1] })
     await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
 
     const simpleToken = await SimpleToken.new()
