@@ -182,7 +182,6 @@ function store (state, emitter) {
     const _did = state.did || await state.claimtasticEthereum.getIdentity(wallet)
     state.did = _did
     const obj = await state.claimtasticEthereum.getClaims(_did)
-    console.log('web3 provider', state.web3web3Provider)
     const profile = await Box.getProfile(wallet || state.myWallet, state.web3Provider)
     state.name = profile.name
     state.image = (profile.images && profile.images.length) ? profile.images[0] : null
