@@ -184,7 +184,7 @@ function store (state, emitter) {
     const obj = await state.claimtasticEthereum.getClaims(_did)
     const profile = await Box.getProfile(wallet || state.myWallet, state.web3Provider)
     state.name = profile.name
-    state.image = (profile.images && profile.images.length) ? profile.images[0] : null
+    state.image = (profile.image && profile.image.length) ? profile.image[0] : null
     state.selfClaims = obj.selfClaims
     emitter.emit('endLoading')
   })
