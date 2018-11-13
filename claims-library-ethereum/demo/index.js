@@ -44,9 +44,10 @@ function mainView (state, emit) {
         <h1 class="f5 f4-ns fw6 mid-gray">${_name}</h1>
         ${did ? html`
           <h2 class="f6 gray fw2 tracked">${did}</h2>
-        ` : html `
+        ` : null }
+        ${(!did && canEdit) ? html`
           <button class="b ph3 pv2 ba b--black bg-transparent grow pointer f6" onclick=${createIdentity}>Create ERC725 identity</button>
-        `}
+        ` : null }
         ${canEdit ? html`
           <div>
             <h3><a target="_blank" href="https://alpha.3box.io" class="f5 fw6 db blue no-underline underline-hover">Edit 3Box profile</a></h3>
