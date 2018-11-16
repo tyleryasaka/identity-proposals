@@ -12,7 +12,7 @@ function web3GetStorageAt(address, position) {
   });
 }
 
-contract.only('Proxy', async () => {
+contract('Proxy', async () => {
   let resolver;
   before(async () => {
     // creating single contract from which the proxy contract will inherit storage and functions
