@@ -3,7 +3,7 @@ pragma experimental "v0.5.0";
 
 import "./Resolver.sol";
 
-contract Proxy {
+contract Forwarder {
   Resolver public resolver;
 
   function() external payable {

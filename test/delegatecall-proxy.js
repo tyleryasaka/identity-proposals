@@ -1,4 +1,4 @@
-const Proxy = artifacts.require('Proxy')
+const Forwarder = artifacts.require('Forwarder')
 const Resolver = artifacts.require('Resolver')
 const DummyContract = artifacts.require('DummyContract')
 const IDummyContract = artifacts.require('IDummyContract')
@@ -24,7 +24,7 @@ contract('Proxy', async () => {
 
   it('should deploy 3 proxy contracts', async () => {
     // first
-    let proxy = await Proxy.new();
+    let proxy = await Forwarder.new();
     await proxy.setResolver(resolver.address);
     let dummyContractProxy = await IDummyContract.at(proxy.address);
     await dummyContractProxy.increment();
@@ -32,7 +32,7 @@ contract('Proxy', async () => {
     assert.equal(res.toNumber(), 1);
 
     // second
-    proxy = await Proxy.new();
+    proxy = await Forwarder.new();
     await proxy.setResolver(resolver.address);
     dummyContractProxy = await IDummyContract.at(proxy.address);
     await dummyContractProxy.increment();
@@ -40,7 +40,7 @@ contract('Proxy', async () => {
     assert.equal(res.toNumber(), 1);
 
     // third
-    proxy = await Proxy.new();
+    proxy = await Forwarder.new();
     await proxy.setResolver(resolver.address);
     dummyContractProxy = await IDummyContract.at(proxy.address);
     await dummyContractProxy.increment();
