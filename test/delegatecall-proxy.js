@@ -1,4 +1,5 @@
 const Forwarder = artifacts.require('Forwarder')
+const Forwarder2 = artifacts.require('Forwarder2')
 const Resolver = artifacts.require('Resolver')
 const DummyContract = artifacts.require('DummyContract')
 const IDummyContract = artifacts.require('IDummyContract')
@@ -12,39 +13,63 @@ function web3GetStorageAt(address, position) {
   });
 }
 
-contract('Proxy', async () => {
+contract('Forwarder', async () => {
   let resolver;
+  let dummyContract;
   before(async () => {
-    // creating single contract from which the proxy contract will inherit storage and functions
-    const dummyContract = await DummyContract.new();
+    // creating single contract from which the forwarder contract will inherit storage and functions
+    dummyContract = await DummyContract.new();
     resolver = await Resolver.new();
     await resolver.register('increment()', dummyContract.address);
     await resolver.register('get()', dummyContract.address);
   });
 
-  it('should deploy 3 proxy contracts', async () => {
+  it('should deploy 3 forwarder contracts', async () => {
     // first
-    let proxy = await Forwarder.new();
-    await proxy.setResolver(resolver.address);
-    let dummyContractProxy = await IDummyContract.at(proxy.address);
-    await dummyContractProxy.increment();
-    let res = await dummyContractProxy.get();
+    let forwarder = await Forwarder.new();
+    await forwarder.setResolver(resolver.address);
+    let dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    let res = await dummyContractForwarder.get();
     assert.equal(res.toNumber(), 1);
 
     // second
-    proxy = await Forwarder.new();
-    await proxy.setResolver(resolver.address);
-    dummyContractProxy = await IDummyContract.at(proxy.address);
-    await dummyContractProxy.increment();
-    res = await dummyContractProxy.get();
+    forwarder = await Forwarder.new();
+    await forwarder.setResolver(resolver.address);
+    dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    res = await dummyContractForwarder.get();
     assert.equal(res.toNumber(), 1);
 
     // third
-    proxy = await Forwarder.new();
-    await proxy.setResolver(resolver.address);
-    dummyContractProxy = await IDummyContract.at(proxy.address);
-    await dummyContractProxy.increment();
-    res = await dummyContractProxy.get();
+    forwarder = await Forwarder.new();
+    await forwarder.setResolver(resolver.address);
+    dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    res = await dummyContractForwarder.get();
+    assert.equal(res.toNumber(), 1);
+  });
+
+  it('should deploy 3 forwarder contracts without resolver', async () => {
+    // first
+    let forwarder = await Forwarder2.new(dummyContract.address);
+    let dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    let res = await dummyContractForwarder.get();
+    assert.equal(res.toNumber(), 1);
+
+    // second
+    forwarder = await Forwarder2.new(dummyContract.address);
+    dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    res = await dummyContractForwarder.get();
+    assert.equal(res.toNumber(), 1);
+
+    // third
+    forwarder = await Forwarder2.new(dummyContract.address);
+    dummyContractForwarder = await IDummyContract.at(forwarder.address);
+    await dummyContractForwarder.increment();
+    res = await dummyContractForwarder.get();
     assert.equal(res.toNumber(), 1);
   });
 
