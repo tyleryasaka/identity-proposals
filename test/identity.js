@@ -1,6 +1,6 @@
 var Identity = artifacts.require('Identity')
 var Counter = artifacts.require('Counter')
-var IdentityManager = artifacts.require('IdentityManager')
+var KeyManager = artifacts.require('KeyManager')
 var IdentityRegistry = artifacts.require('IdentityRegistry')
 var ClaimRegistry780 = artifacts.require('ClaimRegistry780')
 var IdentityFactory = artifacts.require('IdentityFactory')
@@ -60,12 +60,12 @@ contract('Identity', function(accounts) {
     assert.equal((await counter.get()).toString(), '0')
 
     // Transfer identity ownership to the key manager
-    const identityManager = await IdentityManager.new(identity.address, accounts[1], { from: accounts[1] })
-    await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+    const keyManager = await KeyManager.new(identity.address, accounts[1], { from: accounts[1] })
+    await identity.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
     // Call counter.increment from identity, through identity manager
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    const result = await identityManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
+    const result = await keyManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
 
     // Check that increment was called
     assert.equal((await counter.get()).toString(), '1')
@@ -97,22 +97,22 @@ contract('Identity', function(accounts) {
   })
 
   describe('gas cost comparison', async function() {
-    let identity, identityWithManager, counter, identityManager, metaWallet, simpleToken
+    let identity, identityWithManager, counter, keyManager, metaWallet, simpleToken
 
     beforeEach(async function() {
       identity = await Identity.new(accounts[0])
       identityWithManager = await Identity.new(accounts[0])
       metaWallet = await MetaWallet.new()
       counter = await Counter.new()
-      identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-      await identityManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
-      await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+      keyManager = await KeyManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
+      await keyManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
+      await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
       simpleToken = await SimpleToken.new()
       await simpleToken.transfer(accounts[1], 10)
       await simpleToken.approve(metaWallet.address, 10, { from: accounts[1] })
-      await metaWallet.deposit(simpleToken.address, identityManager.address, 10, { from: accounts[1] })
-      const balance = Number(await metaWallet.balanceOf(simpleToken.address, identityManager.address))
+      await metaWallet.deposit(simpleToken.address, keyManager.address, 10, { from: accounts[1] })
+      const balance = Number(await metaWallet.balanceOf(simpleToken.address, keyManager.address))
       assert.equal(balance, 10)
     })
 
@@ -136,7 +136,7 @@ contract('Identity', function(accounts) {
     it('with identity and manager', async function() {
       // Call counter.increment from identity, through identity manager
       const encodedCall = getEncodedCall(web3, counter, 'increment')
-      await identityManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
+      await keyManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
 
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
@@ -146,11 +146,11 @@ contract('Identity', function(accounts) {
       // Call counter.increment from identity, through identity manager, through meta wallet
       // yes, this is getting really meta
       const encodedCall = getEncodedCall(web3, counter, 'increment')
-      const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, identityManager.address)
+      const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, keyManager.address)
       const nonce = Number(await metaWallet.getNonce(nonceKey))
       const expiry = Math.floor( Date.now() / 1000 ) + 100
-      const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, identityManager.address, simpleToken.address, 1, nonce], accounts[1])
-      await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, identityManager.address, simpleToken.address, 1, { from: accounts[2] })
+      const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, keyManager.address, simpleToken.address, 1, nonce], accounts[1])
+      await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, keyManager.address, simpleToken.address, 1, { from: accounts[2] })
 
       // Check that increment was called
       assert.equal((await counter.get()).toString(), '1')
@@ -158,110 +158,110 @@ contract('Identity', function(accounts) {
   })
 })
 
-contract('IdentityManager', function(accounts) {
+contract('KeyManager', function(accounts) {
   it('should be able to add and remove keys', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const keyManager = await KeyManager.new(identity.address, accounts[0])
     const actionPurpose = 2
     const emptyPurpose = 0
 
     // add key
-    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
+    await keyManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
 
     // check that key was added
-    let purpose = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
+    let purpose = await keyManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(purpose, actionPurpose)
 
     // add key, signed
     let nonceKey = web3.utils.soliditySha3("addKeySigned", accounts[2], actionPurpose)
-    let nonce = Number(await identityManager.getNonce(nonceKey))
+    let nonce = Number(await keyManager.getNonce(nonceKey))
     let expiry = Math.floor( Date.now() / 1000 ) + 100
-    let signature = await sign([identityManager.address, "addKeySigned", accounts[2], actionPurpose, nonce, expiry], accounts[0])
-    await identityManager.addKeySigned(accounts[2], actionPurpose, expiry, signature, { from: accounts[3] })
+    let signature = await sign([keyManager.address, "addKeySigned", accounts[2], actionPurpose, nonce, expiry], accounts[0])
+    await keyManager.addKeySigned(accounts[2], actionPurpose, expiry, signature, { from: accounts[3] })
 
     // check that key was added
-    purpose = await identityManager.getKey(web3.utils.padLeft(accounts[2], 64))
+    purpose = await keyManager.getKey(web3.utils.padLeft(accounts[2], 64))
     assert.equal(purpose, actionPurpose)
 
     // remove key
-    await identityManager.removeKey(web3.utils.padLeft(accounts[1], 64))
+    await keyManager.removeKey(web3.utils.padLeft(accounts[1], 64))
 
     // check that key was removed
-    purpose = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
+    purpose = await keyManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(purpose, emptyPurpose)
 
     // remove key, signed
     nonceKey = web3.utils.soliditySha3("removeKeySigned", accounts[2])
-    nonce = Number(await identityManager.getNonce(nonceKey))
+    nonce = Number(await keyManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "removeKeySigned", accounts[2], nonce, expiry], accounts[0])
-    await identityManager.removeKeySigned(accounts[2], expiry, signature, { from: accounts[3] })
+    signature = await sign([keyManager.address, "removeKeySigned", accounts[2], nonce, expiry], accounts[0])
+    await keyManager.removeKeySigned(accounts[2], expiry, signature, { from: accounts[3] })
 
     // check that key was removed
-    purpose = await identityManager.getKey(web3.utils.padLeft(accounts[2], 64))
+    purpose = await keyManager.getKey(web3.utils.padLeft(accounts[2], 64))
     assert.equal(purpose, emptyPurpose)
   })
 
   it('should allow execution for action purposes', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const keyManager = await KeyManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionPurpose = 2
-    await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+    await identity.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
     // add key
-    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
+    await keyManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
 
     // execute counter
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    await identityManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
+    await keyManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
     assert.equal((await counter.get()).toString(), '1')
 
     // execute counter, signed
     let nonceKey = web3.utils.soliditySha3(operationCall, "executeSigned", counter.address, 0, encodedCall)
-    let nonce = Number(await identityManager.getNonce(nonceKey))
-    let signature = await sign([identityManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
-    await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+    let nonce = Number(await keyManager.getNonce(nonceKey))
+    let signature = await sign([keyManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '2')
 
     // remove key
-    await identityManager.removeKey(web3.utils.padLeft(accounts[1], 64))
+    await keyManager.removeKey(web3.utils.padLeft(accounts[1], 64))
 
     // execute counter should fail
     await assertVMExecption(async () => {
-      await identityManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
+      await keyManager.execute(operationCall, counter.address, 0, encodedCall, { from: accounts[1] })
     })
 
     // execute counter, signed should fail
     nonceKey = web3.utils.soliditySha3("executeSigned", operationCall, counter.address, 0, encodedCall)
-    nonce = Number(await identityManager.getNonce(nonceKey))
-    signature = await sign([identityManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    nonce = Number(await keyManager.getNonce(nonceKey))
+    signature = await sign([keyManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
     assert.equal(nonce, 1)
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+      await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     })
   })
 
   it('should not allow replay attacks', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const keyManager = await KeyManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionPurpose = 2
-    await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+    await identity.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
     // add key
-    await identityManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
+    await keyManager.addKey(web3.utils.padLeft(accounts[1], 64), actionPurpose)
 
     // execute counter, signed
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     let nonce = 0
-    signature = await sign([identityManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
-    await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
+    signature = await sign([keyManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, 0], accounts[1])
+    await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // replay attack should fail
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[3] })
+      await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, 0, signature, { from: accounts[3] })
     })
   })
 
@@ -279,65 +279,65 @@ contract('IdentityManager', function(accounts) {
     assert.ok(manager)
 
     // Test new contracts
-    const identityManager = IdentityManager.at(manager)
+    const keyManager = KeyManager.at(manager)
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    await identityManager.execute(operationCall, counter.address, 0, encodedCall)
+    await keyManager.execute(operationCall, counter.address, 0, encodedCall)
     assert.equal((await counter.get()).toString(), '1')
   })
 
   it('should enforce expiry', async function() {
     const identity = await Identity.new(accounts[0])
-    const identityManager = await IdentityManager.new(identity.address, accounts[0])
+    const keyManager = await KeyManager.new(identity.address, accounts[0])
     const counter = await Counter.new()
     const actionPurpose = 2
-    await identity.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+    await identity.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
     // add key, signed with invalid expiry
     let nonceKey = web3.utils.soliditySha3("addKeySigned", accounts[1], actionPurpose)
-    let nonce = Number(await identityManager.getNonce(nonceKey))
+    let nonce = Number(await keyManager.getNonce(nonceKey))
     let expiry = Math.floor( Date.now() / 1000 ) - 100
-    let signature = await sign([identityManager.address, "addKeySigned", accounts[1], actionPurpose, nonce, expiry], accounts[0])
+    let signature = await sign([keyManager.address, "addKeySigned", accounts[1], actionPurpose, nonce, expiry], accounts[0])
     await assertVMExecption(async () => {
-      await identityManager.addKeySigned(accounts[1], actionPurpose, expiry, signature, { from: accounts[3] })
+      await keyManager.addKeySigned(accounts[1], actionPurpose, expiry, signature, { from: accounts[3] })
     })
 
     // add key, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "addKeySigned", accounts[1], actionPurpose, nonce, expiry], accounts[0])
-    await identityManager.addKeySigned(accounts[1], actionPurpose, expiry, signature, { from: accounts[3] })
+    signature = await sign([keyManager.address, "addKeySigned", accounts[1], actionPurpose, nonce, expiry], accounts[0])
+    await keyManager.addKeySigned(accounts[1], actionPurpose, expiry, signature, { from: accounts[3] })
 
     // execute counter, signed with invalid expiry
     const encodedCall = getEncodedCall(web3, counter, 'increment')
     nonceKey = web3.utils.soliditySha3("executeSigned", operationCall, counter.address, 0, encodedCall)
-    nonce = Number(await identityManager.getNonce(nonceKey))
+    nonce = Number(await keyManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
-    signature = await sign([identityManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    signature = await sign([keyManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, expiry], accounts[1])
     await assertVMExecption(async () => {
-      await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+      await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
     })
 
     // execute counter, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, expiry], accounts[1])
-    await identityManager.executeSigned(operationCall, counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
+    signature = await sign([keyManager.address, "executeSigned", operationCall, counter.address, 0, encodedCall, nonce, expiry], accounts[1])
+    await keyManager.executeSigned(operationCall, counter.address, 0, encodedCall, expiry, signature, { from: accounts[2] })
     assert.equal((await counter.get()).toString(), '1')
 
     // remove key, signed with invalid expiry
     nonceKey = web3.utils.soliditySha3("removeKeySigned", accounts[1])
-    nonce = Number(await identityManager.getNonce(nonceKey))
+    nonce = Number(await keyManager.getNonce(nonceKey))
     expiry = Math.floor( Date.now() / 1000 ) - 100
-    signature = await sign([identityManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
+    signature = await sign([keyManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
     await assertVMExecption(async () => {
-      await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
+      await keyManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
     })
-    let purpose = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
+    let purpose = await keyManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(purpose, actionPurpose)
 
     // add key, signed with valid expiry
     expiry = Math.floor( Date.now() / 1000 ) + 100
-    signature = await sign([identityManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
-    await identityManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
-    purpose = await identityManager.getKey(web3.utils.padLeft(accounts[1], 64))
+    signature = await sign([keyManager.address, "removeKeySigned", accounts[1], nonce, expiry], accounts[0])
+    await keyManager.removeKeySigned(accounts[1], expiry, signature, { from: accounts[3] })
+    purpose = await keyManager.getKey(web3.utils.padLeft(accounts[1], 64))
     assert.equal(purpose, 0)
   })
 })
@@ -404,24 +404,24 @@ contract('MetaWallet', function(accounts) {
     const identityWithManager = await Identity.new(accounts[0])
     const metaWallet = await MetaWallet.new()
     const counter = await Counter.new()
-    const identityManager = await IdentityManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
-    await identityManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
-    await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(identityManager.address, 64))
+    const keyManager = await KeyManager.new(identityWithManager.address, accounts[1], { from: accounts[1] })
+    await keyManager.addKey(web3.utils.padLeft(metaWallet.address, 64), 2, { from: accounts[1] })
+    await identityWithManager.setData(KEY_OWNER, web3.utils.padLeft(keyManager.address, 64))
 
     const simpleToken = await SimpleToken.new()
     await simpleToken.transfer(accounts[1], 10)
     await simpleToken.approve(metaWallet.address, 10, { from: accounts[1] })
-    await metaWallet.deposit(simpleToken.address, identityManager.address, 10, { from: accounts[1] })
+    await metaWallet.deposit(simpleToken.address, keyManager.address, 10, { from: accounts[1] })
 
     // Facilitate a sponsored execution
     // The identity manager will sign a message giving permission for the wallet to transfer 3 tokens in exchange for executing the call.
     const encodedCall = getEncodedCall(web3, counter, 'increment')
-    const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, identityManager.address)
+    const nonceKey = web3.utils.soliditySha3("execute", counter.address, 0, encodedCall, keyManager.address)
     const nonce = Number(await metaWallet.getNonce(nonceKey))
     const expiry = Math.floor( Date.now() / 1000 ) + 100
     const tokensToTransfer = 3
-    const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, identityManager.address, simpleToken.address, tokensToTransfer, nonce], accounts[1])
-    await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, identityManager.address, simpleToken.address, tokensToTransfer, { from: accounts[2] })
+    const signature = await sign([metaWallet.address, "execute", counter.address, 0, encodedCall, expiry, keyManager.address, simpleToken.address, tokensToTransfer, nonce], accounts[1])
+    await metaWallet.execute(counter.address, 0, encodedCall, expiry, signature, keyManager.address, simpleToken.address, tokensToTransfer, { from: accounts[2] })
 
     // Check that increment was called and tokens have been transferred
     assert.equal((await counter.get()).toString(), '1')

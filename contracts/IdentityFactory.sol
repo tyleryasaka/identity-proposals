@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./Identity.sol";
-import "./IdentityManager.sol";
+import "./KeyManager.sol";
 
 contract IdentityFactory {
     event CreatedIdentityWithManager(address identity, address manager);
@@ -10,7 +10,7 @@ contract IdentityFactory {
 
     function createIdentityWithMetaWallet(address metaWallet) public {
         Identity identity = new Identity(address(this));
-        IdentityManager identityManager = new IdentityManager(identity, address(this));
+        KeyManager identityManager = new KeyManager(identity, address(this));
         identityManager.addKey(bytes32(metaWallet), 2);
         identityManager.addKey(bytes32(msg.sender), 1);
         identityManager.removeKey(bytes32(address(this)));
@@ -20,7 +20,7 @@ contract IdentityFactory {
 
     function createIdentityWithManager() public {
         Identity identity = new Identity(address(this));
-        IdentityManager identityManager = new IdentityManager(identity, address(this));
+        KeyManager identityManager = new KeyManager(identity, address(this));
         identityManager.addKey(bytes32(msg.sender), 1);
         identityManager.removeKey(bytes32(address(this)));
         identity.setData(KEY_OWNER, bytes32(address(identityManager)));
