@@ -22,12 +22,12 @@ contract IdentityManager is ERC734 {
     ERC725 private _identity;
 
     modifier onlyManagement() {
-      require(_keyHasRole(msg.sender, MANAGEMENT_ROLE), "Must have manager role");
+      require(_keyHasPurpose(msg.sender, MANAGEMENT_ROLE), "Must have manager role");
       _;
     }
 
     modifier onlyAction() {
-      require(_keyHasRole(msg.sender, ACTION_ROLE), "Must have action role");
+      require(_keyHasPurpose(msg.sender, ACTION_ROLE), "Must have action role");
       _;
     }
 
@@ -55,7 +55,7 @@ contract IdentityManager is ERC734 {
         }
         if (v < 27) v += 27;
         address recovered = ecrecover(keccak256(PREFIX, signatureData), v, r, s);
-        return _keyHasRole(recovered, key);
+        return _keyHasPurpose(recovered, key);
     }
 
     function _checkExpiry(uint256 expiry) internal view returns (bool) {
@@ -65,12 +65,12 @@ contract IdentityManager is ERC734 {
         return true;
     }
 
-    function _keyHasRole(address key, uint256 role) private view returns(bool) {
+    function _keyHasPurpose(address key, uint256 role) private view returns(bool) {
         return (_roles[key] != EMPTY_ROLE) && (_roles[key] <= role);
     }
 
-    function keyHasRole(bytes32 key, uint256 role) external view returns(bool) {
-        return _keyHasRole(address(key), role);
+    function keyHasPurpose(bytes32 key, uint256 role) external view returns(bool) {
+        return _keyHasPurpose(address(key), role);
     }
 
     function getKey(bytes32 key) external view returns(uint256) {
