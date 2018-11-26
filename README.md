@@ -1,3 +1,7 @@
+**Warning**: This repository is stale. for up-to-date progress on identity standards, please see https://github.com/ERC725Alliance/erc725
+
+
+
 # Identity Standards Proposals
 
 This began as a demonstration of how [ERC725](https://github.com/ethereum/EIPs/issues/725) can be split into two separate standards, keeping a separation of concerns between identity and key management.
