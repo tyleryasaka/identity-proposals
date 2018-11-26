@@ -8,16 +8,16 @@ contract Identity is ERC725 {
     uint256 constant OPERATION_CALL = 0;
     uint256 constant OPERATION_DELEGATECALL = 1;
     uint256 constant OPERATION_CREATE = 2;
-    bytes32 constant KEY_OWNER = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    bytes32 constant OWNER_KEY = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
     mapping(bytes32 => bytes32) store;
 
     constructor(address owner) public {
-        store[KEY_OWNER] = bytes32(owner);
+        store[OWNER_KEY] = bytes32(owner);
     }
 
     modifier onlyOwner() {
-        require(msg.sender == address(store[KEY_OWNER]));
+        require(msg.sender == address(store[OWNER_KEY]));
         _;
     }
 
